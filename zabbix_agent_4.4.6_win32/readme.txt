@@ -1,3 +1,8 @@
+剧本附件
+1、zabbix_agent-4.4.6-windows-i386.zip
+下载地址：https://www.zabbix.com/download
+
+
 变量内容
 temp_path="/opt/bigops/temp/"
 zip_file="zabbix_agent-4.4.6-windows-i386.zip"  #压缩包文件名

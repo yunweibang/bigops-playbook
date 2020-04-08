@@ -1,3 +1,14 @@
+剧本附件
+1、wmi_exporter-0.11.0-386.exe
+下载地址：https://github.com/martinlindhe/wmi_exporter/tree/v0.11.0
+
+2、syskey.ps1
+下载地址：https://raw.githubusercontent.com/yunweibang/bigops-playbook/master/wmi_exporter_0.11.0_win32/syskey.ps1
+
+3、userkey.ps1
+下载地址：https://raw.githubusercontent.com/yunweibang/bigops-playbook/master/wmi_exporter_0.11.0_win32/userkey.ps1
+
+
 变量内容
 exe_file="wmi_exporter-0.11.0-386.exe"  #源文件名
 syskey_file="/opt/bigops/job/{{ job_id }}/syskey.ps1"  #生成系统key脚本
@@ -57,4 +68,6 @@ dest_dir="c:/Program Files (x86)/wmi_exporter/"  #源文件拷贝目录
 
     - name: 创建自定义脚本计划任务
       win_shell: cmd.exe /c schtasks /create /F /sc minute /mo 1 /NP /RL HIGHEST /tn "wmi_exporter_userkey" /tr 'PowerShell.exe -file \"{{ dest_dir }}/key/userkey.ps1\"'
-      ignore_errors: yes      
+      ignore_errors: yes   
+
+

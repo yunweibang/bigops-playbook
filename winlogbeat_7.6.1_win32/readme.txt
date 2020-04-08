@@ -1,3 +1,8 @@
+剧本附件
+1、winlogbeat-7.6.1-windows-x86.zip
+下载地址：https://www.elastic.co/cn/downloads/beats/winlogbeat
+
+
 变量内容
 logstash_server="172.31.173.22:6515"  #Logstash服务器IP和端口
 zip_file="winlogbeat-7.6.1-windows-x86.zip"  #压缩包文件名

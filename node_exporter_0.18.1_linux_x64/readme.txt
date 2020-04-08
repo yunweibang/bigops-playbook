@@ -1,3 +1,7 @@
+剧本附件
+1、node_exporter-0.18.1.linux-amd64.tar.gz
+下载地址：https://github.com/prometheus/node_exporter/releases/download/v0.18.1/node_exporter-0.18.1.linux-amd64.tar.gz
+
 变量内容
 src_file="/opt/bigops/job/{{ job_id }}/node_exporter-0.18.1.linux-amd64.tar.gz"  #源文件
 syskey_file="/opt/bigops/job/{{ job_id }}/syskey.sh"  #系统内置key
