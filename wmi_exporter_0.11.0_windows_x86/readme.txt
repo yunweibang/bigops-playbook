@@ -3,12 +3,9 @@
 
 剧本附件
 1、wmi_exporter-0.11.0-386.exe
-下载地址：https://github.com/martinlindhe/wmi_exporter/tree/v0.11.0
+下载地址：https://github.com/martinlindhe/wmi_exporter/releases
 
-2、syskey.ps1
-下载地址：当前仓库
-
-3、userkey.ps1
+2、syskey.ps1、userkey.ps1
 下载地址：当前仓库
 
 
