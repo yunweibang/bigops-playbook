@@ -1,3 +1,12 @@
+监控模式
+安装一个mysqld_exporter监控所有数据库，每个数据库起一个mysqld_exporter端口
+
+
+添加数据库监控用户，your_password是你的数据库连接密码
+CREATE USER `exporter`@`%` IDENTIFIED BY 'your_password';
+GRANT Process, Replication Client, Select ON *.* TO `exporter`@`%`;
+flush privileges;
+
 剧本附件
 1：mysqld_exporter-0.12.1.linux-amd64.tar
 下载地址：https://github.com/prometheus/mysqld_exporter/releases/download/v0.12.1/mysqld_exporter-0.12.1.linux-amd64.tar.gz
@@ -7,7 +16,7 @@
 
 3：172.31.173.22.cnf
 下载地址：https://raw.githubusercontent.com/yunweibang/bigops-playbook/master/mysqld_exporter_0.12.1_linux_x64/files/172.31.173.22.cnf
-
+修改文件名和内容为你的数据库连接信息
 
 变量内容
 src_file="/opt/bigops/job/{{ job_id }}/mysqld_exporter-0.12.1.linux-amd64.tar.gz"  #源文件
