@@ -37,7 +37,7 @@ unarchive_dir="mysqld_exporter-0.12.1.linux-amd64"  #解压后的目录
           - facter
         
     - name: 关闭服务
-      shell: if [ ! -z \"$(ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}')\" ];then ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}'|xargs kill -9;fi
+      shell: "if [ ! -z \"$(ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}')\" ];then ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}'|xargs kill -9;fi"
       ignore_errors: yes
 
     - name: 创建安装目录
