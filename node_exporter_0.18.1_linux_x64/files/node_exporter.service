@@ -1,0 +1,12 @@
+[Service]
+User=root
+Group=root
+ExecStart=/opt/exporter/node_exporter/node_exporter --collector.textfile.directory=/opt/exporter/node_exporter/key/
+ExecStop=/usr/bin/killall node_exporter
+
+[Install]
+WantedBy=multi-user.target
+
+[Unit]
+Description=node_exporter
+After=network.target 

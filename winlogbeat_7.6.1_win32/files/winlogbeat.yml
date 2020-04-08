@@ -1,0 +1,16 @@
+winlogbeat.event_logs:
+  - name: Application
+    provider:
+      - Application Error
+      - Application Hang
+      - Windows Error Reporting
+      - EMET
+  - name: Security
+    level: critical, error, warning
+    event_id: 4624, 4625, 4700-4800, -4735
+  - name: System
+    level: critical, error, warning
+    ignore_older: 168h
+
+output.logstash:
+  hosts: ["x.x.x.x:6515"]
