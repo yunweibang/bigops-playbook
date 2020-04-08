@@ -112,8 +112,8 @@ Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "tcp_time
 # 获取分区使用率
 
 gwmi win32_logicaldisk -filter "drivetype = 3" | % {
-  $diskpart='diskpart_fs{volume="' + $_.deviceid +'"} '+ (($_.size-$_.freespace)/$_.size*100).tostring("f2") + "`n"
-  Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "$diskpart"
+  $disk='disk_fs{volume="' + $_.deviceid +'"} '+ (($_.size-$_.freespace)/$_.size*100).tostring("f2") + "`n"
+  Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "$disk"
 }
 
 
