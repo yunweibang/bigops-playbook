@@ -48,7 +48,7 @@ function mem_usage()
 
 # 获取磁盘使用率
 
-function disk_usage(){
+function disk_total_usage(){
   $disk = Get-WmiObject -Class win32_logicaldisk -filter "drivetype = 3"
   $allSpace = $disk.Size 
   $allSpace =(($allSpace | Measure-Object -Sum).sum /1gb)
@@ -112,8 +112,8 @@ Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "tcp_time
 # 获取分区使用率
 
 gwmi win32_logicaldisk -filter "drivetype = 3" | % {
-  $disk='disk_fs{volume="' + $_.deviceid +'"} '+ (($_.size-$_.freespace)/$_.size*100).tostring("f2") + "`n"
-  Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "$disk"
+  $disk_fs='disk_fs_usage{volume="' + $_.deviceid +'"} '+ (($_.size-$_.freespace)/$_.size*100).tostring("f2") + "`n"
+  Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "$disk_fs"
 }
 
 
@@ -127,9 +127,9 @@ if ($(mem_usage))
   Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "mem_usage $(mem_usage)`n"
 }
 
-if ($(disk_usage))
+if ($(disk_total_usage))
 {
-  Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "disk_usage $(disk_usage)`n"
+  Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "disk_total_usage $(disk_total_usage)`n"
 }
 
 Move-Item "$output_file_tmp" "$output_file" -force

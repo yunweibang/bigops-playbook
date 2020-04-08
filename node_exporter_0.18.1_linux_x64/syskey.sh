@@ -48,7 +48,7 @@ echo "logined_users_total ${logined_users_total}" >>/opt/exporter/node_exporter/
 
 disk_used=$(df -m| awk 'BEGIN{sum=0}{if($3!~/anon/)sum+=$3}END{print sum}')
 disk_total=$(df -m| awk 'BEGIN{sum=0}{if($2!~/anon/)sum+=$2}END{print sum}')
-echo "${disk_used}" "${disk_total}"|awk '{print "disk_usage",$1/$2*100}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+echo "${disk_used}" "${disk_total}"|awk '{print "disk_total_usage",$1/$2*100}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
 if hash ss 2>/dev/null; then
   ss -s|awk '/estab/{print $2,$4,$10,$12}'|sed 's/[,/()]/ /g'|awk '{print "tcp_total "$1"\ntcp_estab "$2"\ntcp_synrecv "$3"\ntcp_timewait "$4}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
