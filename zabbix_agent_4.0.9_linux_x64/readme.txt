@@ -1,3 +1,18 @@
+安装zabbix_agent-4.0.19-linux-x86_64
+
+
+剧本附件
+1、zabbix_agentd、zabbix_get、zabbix_sender、zabbix_agentd.conf
+
+附件生成方法：
+源代码下载，地址：https://www.zabbix.com/download
+静态编译：
+yum -y install glibc-static libcurl-devel pcre*
+./configure --prefix=/usr --sysconfdir=/etc/zabbix --enable-agent --enable-static 
+
+把zabbix_agentd、zabbix_get、zabbix_sender、zabbix_agentd.conf拷贝到笔记本上传到剧本附件
+
+
 变量内容
 src_file="/opt/bigops/job/{{ job_id }}/zabbix_agent-4.0.9-linux-x86_64.zip" #安装文件
 unzip_dir="zabbix_agent-4.0.9-linux-x86_64"  #解压目录

@@ -1,10 +1,15 @@
+安装zabbix_agent-4.4.6-windows-i386
+
+
 剧本附件
 1、zabbix_agent-4.4.6-windows-i386.zip
 下载地址：https://www.zabbix.com/download
 
+2、zabbix_agentd.conf
+解压zabbix_agent-4.4.6-windows-i386.zip文件，提取conf目录下的zabbix_agentd.conf，修改为配置模板
+
 
 变量内容
-temp_path="/opt/bigops/temp/"
 zip_file="zabbix_agent-4.4.6-windows-i386.zip"  #压缩包文件名
 src_file="/opt/bigops/job/{{ job_id }}/{{ zip_file }}"  #压缩包路径
 config_file="/opt/bigops/job/{{ job_id }}/zabbix_agentd.conf"  #配置模板文件
@@ -71,3 +76,5 @@ install_dir="zabbix_agent"  #安装目录名
 
     - name: 启动服务 
       win_command: net start "Zabbix Agent"
+
+      

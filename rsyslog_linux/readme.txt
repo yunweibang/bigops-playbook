@@ -1,5 +1,8 @@
+设置rsyslog
+
+
 变量内容
-logstash_ip="172.31.173.22"  #Logstash服务器IP
+logstash_ip="172.31.173.22"  #Logstash服务器IP，设置为你自己的
 logstash_port="6514"  #Logstash服务器端口
 facility='*'  #程序模块
 priority=notice  #日志级别

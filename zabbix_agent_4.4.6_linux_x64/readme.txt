@@ -1,3 +1,6 @@
+安装zabbix_agent-4.4.6-linux-x86_64
+
+
 剧本附件
 1、zabbix_agentd、zabbix_get、zabbix_sender、zabbix_agentd.conf
 
@@ -8,7 +11,6 @@ yum -y install glibc-static libcurl-devel pcre*
 ./configure --prefix=/usr --sysconfdir=/etc/zabbix --enable-agent --enable-static 
 
 把zabbix_agentd、zabbix_get、zabbix_sender、zabbix_agentd.conf拷贝到笔记本上传到剧本附件
-
 
 
 变量内容
