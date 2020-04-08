@@ -1,3 +1,14 @@
+剧本附件
+1：mysqld_exporter-0.12.1.linux-amd64.tar
+下载地址：https://github.com/prometheus/mysqld_exporter/releases/download/v0.12.1/mysqld_exporter-0.12.1.linux-amd64.tar.gz
+
+2：mysqld_exporter_start.sh
+下载地址：https://raw.githubusercontent.com/yunweibang/bigops-playbook/master/mysqld_exporter_0.12.1_linux_x64/files/mysqld_exporter_start.sh
+
+3：172.31.173.22.cnf
+下载地址：https://raw.githubusercontent.com/yunweibang/bigops-playbook/master/mysqld_exporter_0.12.1_linux_x64/files/172.31.173.22.cnf
+
+
 变量内容
 src_file="/opt/bigops/job/{{ job_id }}/mysqld_exporter-0.12.1.linux-amd64.tar.gz"  #源文件
 dest_path="/opt/exporter"  #目标路径
