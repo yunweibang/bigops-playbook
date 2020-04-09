@@ -10,17 +10,15 @@ flush privileges;
 1：mysqld_exporter-0.12.1.linux-amd64.tar
 下载地址：https://github.com/prometheus/mysqld_exporter/releases/download/v0.12.1/mysqld_exporter-0.12.1.linux-amd64.tar.gz
 
-2：my.cnf、mysql_exporter.init、mysqld_exporter.server
+2：3306.cnf、mysql_exporter.init、mysqld_exporter.server
 下载地址：当前仓库
 
 
 变量内容
-src_file="/opt/bigops/job/{{ job_id }}/mysqld_exporter-0.12.1.linux-amd64.tar.gz"  #源文件
-mycnf_file="/opt/bigops/job/{{ job_id }}/my.cnf"  #源文件
-init_file="/opt/bigops/job/{{ job_id }}/mysqld_exporter.init"  #CentOS6开机启动文件
-systemctl_file="/opt/bigops/job/{{ job_id }}/mysqld_exporter.service"  #CentOS7开机启动文件
-dest_path="/opt/exporter/"  #目标路径
-unarchive_dir="mysqld_exporter-0.12.1.linux-amd64"  #解压后的目录
+dest_path="/opt/exporter/"  #目标安装路径
+unarchive_file="mysqld_exporter-0.12.1.linux-amd64.tar.gz"  #压缩文件
+unzip_dir="mysqld_exporter-0.12.1.linux-amd64"   #解压目录
+my3306="3306.cnf"  #数据库配置文件
 
 
 剧本内容
@@ -29,15 +27,13 @@ unarchive_dir="mysqld_exporter-0.12.1.linux-amd64"  #解压后的目录
   gather_facts: true
 
   tasks:
-    - name: Collect only facts returned by facter
+    - name: 收集信息
       setup:
         gather_subset:
-          - '!all'
-          - '!any'
-          - facter
+          - min
         
     - name: 关闭服务
-      shell: "if [ ! -z \"$(ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}')\" ];then ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}'|xargs kill -9;fi"
+      shell: if [ ! -z "$(ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}')" ];then ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}'|xargs kill -9;fi
       ignore_errors: yes
 
     - name: 创建安装目录
@@ -45,41 +41,37 @@ unarchive_dir="mysqld_exporter-0.12.1.linux-amd64"  #解压后的目录
       ignore_errors: yes
 
     - name: 上传文件到远程
-      copy:
-        src: '{{ item.src }}'
-        dest: '{{ item.dest }}'
-      with_items:
-        - { src: "{{ src_file }}", dest: "{{ dest_path }}" }
-        - { src: "{{ init_file }}", dest: "{{ dest_path }}" }
-        - { src: "{{ systemctl_file }}", dest: "{{ dest_path }}" }
-        - { src: "{{ mycnf_file }}", dest: "{{ dest_path }}" }
+      copy: src={{ item }} dest={{ dest_path }}
+      with_fileglob:
+        - "{{ job_path }}/*"
     
     - name: 解压文件    
-      shell: tar zxvf {{ dest_path }}/mysqld_exporter-0.12.1.linux-amd64.tar.gz -C /opt/exporter/  
-      
-    - name: 拷贝文件mysqld_exporter 
-      shell: cp -f {{ dest_path }}/{{ unarchive_dir }}/mysqld_exporter {{ dest_path }}/mysqld_exporter/
-      
-    - name: 拷贝文件my.cnf
-      shell: cp -f {{ dest_path }}/my.cnf {{ dest_path }}/mysqld_exporter/
-      
-    - name: 执行权限
-      shell: chmod -R 777 {{ dest_path }}/mysqld_exporter/
-
-    - name: 设置CentOS7开机启动
-      shell: mv -f {{ dest_path }}/mysqld_exporter.service /usr/lib/systemd/system/mysqld_exporter.service
-      when: ansible_service_mgr == 'systemd'
+      shell: tar zxvf {{ dest_path }}/{{ unarchive_file }} -C {{ dest_path }}
     
-    - name: CentOS7启动
-      shell: systemctl enable mysqld_exporter.service && systemctl start mysqld_exporter.service
-      when: ansible_service_mgr == 'systemd'
+    - name: 拷贝文件mysqld_exporter 
+      shell: cp -f {{ dest_path }}/{{ unzip_dir }}/mysqld_exporter {{ dest_path }}/mysqld_exporter/
+
+    - name: 设置执行权限
+      shell: chmod -R 777 {{ dest_path }}
       
+    - name: 拷贝文件3306.cnf
+      shell: cp -f {{ dest_path }}/{{ my3306 }} {{ dest_path }}/mysqld_exporter/
+
     - name: 设置CentOS6开机启动
       shell: mv -f {{ dest_path }}/mysqld_exporter.init /etc/init.d/mysqld_exporter && chmod 777 /etc/init.d/mysqld_exporter
       when: ansible_service_mgr != 'systemd'
       
-    - name: CentOS6启动
+    - name: CentOS6启动服务
       shell: chkconfig mysqld_exporter on && service mysqld_exporter start
       when: ansible_service_mgr != 'systemd'
+      
+    - name: 设置CentOS7开机启动
+      shell: mv -f {{ dest_path }}/mysqld_exporter.service /usr/lib/systemd/system/mysqld_exporter.service
+      when: ansible_service_mgr == 'systemd'
+
+    - name: CentOS7启动服务
+      shell: systemctl enable mysqld_exporter.service && systemctl start mysqld_exporter.service
+      when: ansible_service_mgr == 'systemd'
+      
+
  
-    

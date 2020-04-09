@@ -14,8 +14,8 @@ yum -y install glibc-static libcurl-devel pcre*
 
 
 变量内容
-src_file="/opt/bigops/job/{{ job_id }}/zabbix_agent-4.4.6-linux-x86_64.zip" #安装文件
-unzip_dir="zabbix_agent-4.4.6-linux-x86_64"  #解压目录
+dest_path="/etc/zabbix/"  #目标安装路径
+Server="172.31.173.22"
 ServerActive="172.31.173.22"
 
 
@@ -25,49 +25,72 @@ ServerActive="172.31.173.22"
   gather_facts: no
   
   tasks:
-  - name: 启动zabbix_agent服务
-    service:
-      name: zabbix-agent
-      state: stopped
-    ignore_errors: yes
-      
-  - name: 解压本地文件到远程主机
-    unarchive: 
-      src:  "{{ src_file }}"
-      dest: /tmp
-      copy: yes
-
-  - name: 更新zabbix_get文件
-    shell: mv -f /tmp/{{ unzip_dir }}/zabbix_get /usr/bin/
-
-  - name: 更新zabbix_sender文件
-    shell: mv -f /tmp/{{ unzip_dir }}/zabbix_sender /usr/bin/
-
-  - name: 更新zabbix_agentd文件
-    shell: mv -f /tmp/{{ unzip_dir }}/zabbix_agentd /usr/sbin/
-
-  - name: 给zabbix_agentd文件执行权限
-    shell: chmod 777 /usr/sbin/zabbix_agentd
-
-  - name: 更新zabbix_agentd.conf文件
-    shell: mv -f /tmp/{{ unzip_dir }}/zabbix_agentd.conf /etc/zabbix/
+    - name: 收集信息
+      setup:
+        gather_subset:
+          - min
+          
+    - name: 关闭服务
+      shell: if [ ! -z "$(ps aux|grep zabbix_agentd|grep -v grep|awk '{print $2}')" ];then ps aux|grep zabbix_agentd|grep -v grep|awk '{print $2}'|xargs kill -9;fi
+      ignore_errors: yes
     
-  - name: 更新Hostname配置
-    lineinfile:
-      path: /etc/zabbix/zabbix_agentd.conf
-      regexp: '^Hostname='
-      line: 'Hostname={{ inventory_hostname }}'
-      backrefs: no
+    - name: 创建安装目录
+      shell: mkdir -p {{ dest_path }}
+      ignore_errors: yes
+
+    - name: 上传文件到远程
+      copy: src={{ item }} dest=/usr/bin/
+      with_items:
+        - "{{ job_path }}/zabbix_sender"
+        - "{{ job_path }}/zabbix_get"    
+
+    - name: 上传文件到远程
+      copy: src={{ job_path }}/zabbix_agentd dest=/usr/sbin/
+
+    - name: 上传文件到远程
+      copy: src={{ item }} dest={{ dest_path }}
+      with_items: 
+        - "{{ job_path }}/zabbix_agentd.conf"
+        - "{{ job_path }}/zabbix-agent.init"
+        - "{{ job_path }}/zabbix-agent.service"
+
+    - name: 设置权限
+      shell: chmod 777 /usr/bin/zabbix_sender /usr/bin/zabbix_get /usr/sbin/zabbix_agentd
+ 
+    - name: 更新Hostname配置
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^Hostname='
+        line: 'Hostname={{ inventory_hostname }}'
+        backrefs: no
+
+    - name: 更新Server配置
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^Server='
+        line: 'Server={{ Server }}'
+        backrefs: no
+
+    - name: 更新ServerActive配置
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^ServerActive='
+        line: 'ServerActive={{ ServerActive }}'
+        backrefs: no
+
+    - name: 设置CentOS6开机启动
+      shell: mv -f {{ dest_path }}/zabbix-agent.init /etc/init.d/zabbix-agent && chmod 777 /etc/init.d/zabbix-agent
+      when: ansible_service_mgr != 'systemd'
       
-  - name: 更新ServerActive配置
-    lineinfile:
-      path: /etc/zabbix/zabbix_agentd.conf
-      regexp: '^ServerActive='
-      line: 'ServerActive={{ ServerActive }}'
-      backrefs: no
+    - name: CentOS6启动服务
+      shell: chkconfig zabbix-agent on && service zabbix-agent start
+      when: ansible_service_mgr != 'systemd'
+      
+    - name: 设置CentOS7开机启动
+      shell: mv -f {{ dest_path }}/zabbix-agent.service /usr/lib/systemd/system/zabbix-agent.service
+      when: ansible_service_mgr == 'systemd'
 
-  - name: 启动zabbix_agent服务
-    service:
-      name: zabbix-agent
-      state: started
-
+    - name: CentOS7启动服务
+      shell: systemctl enable zabbix-agent.service && systemctl start zabbix-agent.service
+      when: ansible_service_mgr == 'systemd'
+      
