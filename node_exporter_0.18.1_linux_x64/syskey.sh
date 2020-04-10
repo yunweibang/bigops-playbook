@@ -61,7 +61,7 @@ fi
 top -bn 1|grep -i tasks|awk '{print "proc_total "$2"\nproc_running "$4"\nproc_sleeping "$6"\nproc_zombie "$(NF-1)}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
 if hash mpstat 2>/dev/null; then
-    cpu_usage=$(mpstat -P ALL 2 5|awk '$1 ~ /:$/ && $2 ~ /all/ {print 100-$NF}')
+    cpu_usage=$(mpstat -P ALL 1 15|awk '$1 ~ /:$/ && $2 ~ /all/ {print 100-$NF}')
     echo "cpu_usage ${cpu_usage}" >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 else
     echo "not found command mpstat, yum -y install sysstat"
