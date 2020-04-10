@@ -3,8 +3,10 @@
 export PATH=/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/root/bin:/opt/bigops/bigagent/bin
 export CURL="curl -s --connect-timeout 3 -m 10 -X POST"
 
-mem_usage=$(free -m |grep -Ei '^mem'| awk '{printf "%.2f", $3*100/$2}')
-echo "mem_usage ${mem_usage}" >/opt/exporter/node_exporter/key/syskey.prom.tmp
+memtotal=$(free -m | grep Mem | awk '{print $2}')
+memavailable=$(free -m | grep Mem | awk '{print $7}')
+echo ${memavailable} ${memtotal} | awk '{print "mem_usage "100 - ($1/$2 * 100.0)}' >/opt/exporter/node_exporter/key/syskey.prom.tmp
+
 
 if hash ss 2>/dev/null; then
     TCP_PORT=$(ss -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
@@ -59,7 +61,7 @@ fi
 top -bn 1|grep -i tasks|awk '{print "proc_total "$2"\nproc_running "$4"\nproc_sleeping "$6"\nproc_zombie "$(NF-1)}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
 if hash mpstat 2>/dev/null; then
-    cpu_usage=$(mpstat -P ALL 1 10|awk '$1 ~ /:$/ && $2 ~ /all/ {print 100-$NF}')
+    cpu_usage=$(mpstat -P ALL 2 5|awk '$1 ~ /:$/ && $2 ~ /all/ {print 100-$NF}')
     echo "cpu_usage ${cpu_usage}" >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 else
     echo "not found command mpstat, yum -y install sysstat"
