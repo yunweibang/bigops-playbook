@@ -1,4 +1,8 @@
+作业名称：
 安装winlogbeat-7.6.1-windows-x86
+
+系统类型：
+Windows
 
 
 剧本附件

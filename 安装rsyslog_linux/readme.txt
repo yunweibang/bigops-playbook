@@ -1,5 +1,8 @@
-设置rsyslog
+作业名称：
+安装rsyslog
 
+系统类型：
+Linux
 
 变量内容
 logstash_ip="172.31.173.22"  #Logstash服务器IP，设置为你自己的

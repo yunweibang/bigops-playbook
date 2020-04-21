@@ -1,5 +1,10 @@
+作业名称：
 安装zabbix_agent-4.4.6-windows-i386
 注意：作业名称必须带关键字zabbix_agent，才能在zabbix-agent管理的安装下拉中显示
+
+系统类型：
+Windows
+
 
 剧本附件
 1、zabbix_agent-4.4.6-windows-i386.zip

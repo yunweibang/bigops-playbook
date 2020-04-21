@@ -1,17 +1,21 @@
+作业名称：
 安装node_exporter-0.18.1.linux-amd64
+
+系统类型：
+Linux
 
 剧本附件
 1、node_exporter-0.18.1.linux-amd64.tar.gz
-下载地址：https://github.com/prometheus/node_exporter/releases/download/v0.18.1/node_exporter-0.18.1.linux-amd64.tar.gz
-
-2、syskey.sh、userkey.sh、node_exporter.service、node_exporter
-下载地址：当前仓库
+2、syskey.sh
+3、userkey.sh
+4、node_exporter.service
+5、node_exporter
 
 
 变量内容
 dest_path="/opt/exporter/"  #目标安装路径
 unarchive_file="node_exporter-0.18.1.linux-amd64.tar.gz"  #压缩文件
-unzip_dir="node_exporter-0.18.1.linux-amd64"   #解压目录
+unzip_dir="{{ unarchive_file | splitext | first | splitext | first }}"   #解压目录
 
 
 剧本内容
@@ -26,18 +30,28 @@ unzip_dir="node_exporter-0.18.1.linux-amd64"   #解压目录
           - min
         
     - name: 安装ss
-      shell: "if ! hash ss 2>/dev/null;then yum -y install iproute;fi"
+      shell: |
+        if ! hash ss 2>/dev/null;then 
+          yum -y install iproute
+        fi
     
     - name: 安装mpstat
-      shell: "if ! hash mpstat 2>/dev/null;then yum -y install sysstat;fi"
+      shell: |
+        if ! hash mpstat 2>/dev/null;then 
+          yum -y install sysstat
+        fi
       
     - name: 关闭服务
-      shell: if [ ! -z "$(ps aux|grep node_exporter|grep -v grep|awk '{print $2}')" ];then ps aux|grep node_exporter|grep -v grep|awk '{print $2}'|xargs kill -9;fi
-      ignore_errors: yes
+      shell: |
+        if [ ! -z "$(ps aux|grep node_exporter|grep -v grep|awk '{print $2}')" ];then 
+          ps aux|grep node_exporter|grep -v grep|awk '{print $2}'|xargs kill -9
+        fi
 
     - name: 创建安装目录
-      shell: mkdir -p {{ dest_path }}/node_exporter/key/
-      ignore_errors: yes
+      shell: |
+        if [ ! -d {{ dest_path }}/node_exporter/key/ ];then
+          mkdir -p {{ dest_path }}/node_exporter/key/
+        fi
 
     - name: 上传文件到远程
       copy: src={{ item }} dest={{ dest_path }}
@@ -66,11 +80,16 @@ unzip_dir="node_exporter-0.18.1.linux-amd64"   #解压目录
       shell: "timeout 30 /bin/bash {{ dest_path }}/node_exporter/key/*key.sh"
 
     - name: 设置CentOS6开机启动
-      shell: mv -f {{ dest_path }}/node_exporter.init /etc/init.d/node_exporter && chmod 777 /etc/init.d/node_exporter
+      shell: |
+        mv -f {{ dest_path }}/node_exporter.init /etc/init.d/node_exporter 
+        chmod 777 /etc/init.d/node_exporter
       when: ansible_service_mgr != 'systemd'
 
     - name: CentOS6启动服务
-      shell: yum -y install daemonize && chkconfig node_exporter on && service node_exporter start
+      shell: |
+        yum -y install daemonize 
+        chkconfig node_exporter on
+        service node_exporter start
       when: ansible_service_mgr != 'systemd'
       ignore_errors: yes
       
@@ -79,7 +98,9 @@ unzip_dir="node_exporter-0.18.1.linux-amd64"   #解压目录
       when: ansible_service_mgr == 'systemd'
       
     - name: CentOS7启动服务
-      shell: systemctl enable node_exporter && systemctl start node_exporter
+      shell: |
+        systemctl enable node_exporter
+        systemctl start node_exporter
       when: ansible_service_mgr == 'systemd'
   
 
