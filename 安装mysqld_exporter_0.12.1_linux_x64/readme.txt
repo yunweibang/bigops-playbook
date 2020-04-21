@@ -11,10 +11,12 @@ flush privileges;
 
 剧本附件
 1：mysqld_exporter-0.12.1.linux-amd64.tar
-下载地址：https://github.com/prometheus/mysqld_exporter/releases/download/v0.12.1/mysqld_exporter-0.12.1.linux-amd64.tar.gz
+2：3306.cnf
+3：mysql_exporter.init
+4：mysqld_exporter.server
 
-2：3306.cnf、mysql_exporter.init、mysqld_exporter.server
-下载地址：当前仓库
+mysqld_exporter-0.12.1.linux-amd64官网下载地址，共参考：
+https://github.com/prometheus/mysqld_exporter/releases/download/v0.12.1/mysqld_exporter-0.12.1.linux-amd64.tar.gz
 
 
 变量内容

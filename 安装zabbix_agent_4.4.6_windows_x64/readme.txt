@@ -7,11 +7,13 @@ Windows
 
 
 剧本附件
-1、zabbix_agent-4.4.6-windows-i386.zip
-下载地址：https://www.zabbix.com/download
+1：zabbix_agent-4.4.6-windows-i386.zip
+2：zabbix_agentd.conf
+备注：解压zabbix_agent-4.4.6-windows-i386.zip文件，提取conf目录下的zabbix_agentd.conf，可以自定义配置模板
 
-2、zabbix_agentd.conf
-解压zabbix_agent-4.4.6-windows-i386.zip文件，提取conf目录下的zabbix_agentd.conf，修改为配置模板
+
+zabbix_agent-4.4.6-windows官网下载地址，供参考：
+https://www.zabbix.com/download
 
 
 变量内容

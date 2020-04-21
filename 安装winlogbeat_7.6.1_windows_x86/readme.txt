@@ -6,12 +6,11 @@ Windows
 
 
 剧本附件
-1、winlogbeat-7.6.1-windows-x86.zip
-下载地址：https://www.elastic.co/cn/downloads/beats/winlogbeat
+1：winlogbeat-7.6.1-windows-x86.zip
+2：winlogbeat.yml
 
-2、winlogbeat.yml
-当前仓库下载
-
+winlogbeat官网下载地址，供参考：
+https://www.elastic.co/cn/downloads/beats/winlogbeat
 
 变量内容
 dest_path="c:/Program Files (x86)/"  #目标安装路径

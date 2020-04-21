@@ -6,9 +6,12 @@ Linux
 
 
 剧本附件
-1、zabbix_agentd、zabbix_get、zabbix_sender、zabbix_agentd.conf
+1：zabbix_agentd
+2：zabbix_get
+3：zabbix_sender
+4：zabbix_agentd.conf
 
-附件生成方法：
+附件生成方法，供参考：
 源代码下载，地址：https://www.zabbix.com/download
 静态编译：
 yum -y install glibc-static libcurl-devel pcre*
