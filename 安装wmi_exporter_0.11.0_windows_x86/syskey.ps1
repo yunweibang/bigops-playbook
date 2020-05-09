@@ -92,10 +92,25 @@ netstat -ano|findstr /i "UDP "|findstr -v "\[::\]" |
 
 # 获取进程状态
 
-#Get-WmiObject Win32_Service -filter "State = 'Running'" | % {
-#  $proc=$_.Name -replace '[ ]','_'
-#  Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "proc_status{proc=\"$proc\"} 1"
-#}
+foreach($file in tasklist /v /fo csv|convertfrom-csv|select '映像名称')
+{
+  $imagename = $File.映像名称
+  if ($imagename)
+  {
+    $imagename = 'proc_status{proc="' + "$imagename" + '"}'
+    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename 1"
+  }
+}
+
+foreach($file in tasklist /v /fo csv|convertfrom-csv|select 'imagename')
+{
+  $imagename = $File.imagename
+  if ($imagename)
+  {
+    $imagename = 'proc_status{proc="' + "$imagename" + '"}'
+    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename 1"
+  }
+}
 
 
 # 获取网络连接状态
