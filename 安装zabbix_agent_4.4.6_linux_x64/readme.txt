@@ -15,9 +15,17 @@ Linux
 源代码下载，地址：https://www.zabbix.com/download
 静态编译：
 yum -y install glibc-static libcurl-devel pcre*
-./configure --prefix=/usr --sysconfdir=/etc/zabbix --enable-agent --enable-static 
+wget https://ftp.gnu.org/gnu/automake/automake-1.15.tar.gz
+tar zxvf automake-1.15.tar.gz
+cd automake-1.15
+./configure --docdir=/usr/share/doc/automake-1.15
+make && make install
+tar zxvf zabbix-x.x.x.tar.gz
+cd zabbix-x.x.x
+./configure --prefix=/usr --sysconfdir=/etc/zabbix --enable-agent --enable-static
+make install
 
-把zabbix_agentd、zabbix_get、zabbix_sender、zabbix_agentd.conf拷贝到笔记本上传到剧本附件
+把zabbix_agentd、zabbix_get、zabbix_sender、zabbix_agentd.conf先拷贝到笔记本上，然后通过web上传到剧本附件
 
 
 变量内容

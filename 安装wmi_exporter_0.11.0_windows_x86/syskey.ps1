@@ -24,38 +24,41 @@ Invoke-TimeOutCommand -Timeout 15 -ScriptBlock {
 $basedir="c:/Program Files (x86)/wmi_exporter/key"
 $output_file="$basedir/syskey.prom"
 $output_file_tmp="$basedir/syskey.prom.tmp"
-Set-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value ""
 
 # 获取CPU使用率
 
-function cpu_usage()
+$cpu = gwmi win32_Processor
+$cpu_usage = "{0:0.0}" -f $cpu.LoadPercentage
+
+if ($cpu_usage)
 {
-  $cpu = Get-WmiObject -Class Win32_Processor 
-  $Havecpu = $cpu.LoadPercentage 
-  return @($Havecpu.tostring("f2"))
+  Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "cpu_usage $cpu_usage"
 }
 
 # 获取内存使用率
 
-function mem_usage()
+$mem = Get-WmiObject -Class win32_OperatingSystem
+$Allmen = ($mem.TotalVisibleMemorySize  / 1KB) 
+$Freemen = ($mem.FreePhysicalMemory  / 1KB) 
+$mem_usage = "{0:0.0}" -f ((($mem.TotalVisibleMemorySize-$mem.FreePhysicalMemory)/$mem.TotalVisibleMemorySize)*100)
+
+if ($mem_usage)
 {
-  $mem = Get-WmiObject -Class win32_OperatingSystem
-  $Allmen = ($mem.TotalVisibleMemorySize  / 1KB) 
-  $Freemen = ($mem.FreePhysicalMemory  / 1KB) 
-  $Permem =  ((($mem.TotalVisibleMemorySize-$mem.FreePhysicalMemory)/$mem.TotalVisibleMemorySize)*100)
-  return @($Permem.tostring("f2"))
+  Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "mem_usage $mem_usage"
 }
 
 # 获取磁盘使用率
 
-function disk_total_usage(){
-  $disk = Get-WmiObject -Class win32_logicaldisk -filter "drivetype = 3"
-  $allSpace = $disk.Size 
-  $allSpace =(($allSpace | Measure-Object -Sum).sum /1gb)
-  $FreeSpace = $disk.FreeSpace 
-  $FreeSpace =(($FreeSpace | Measure-Object -Sum).sum /1gb)
-  $disk_used_percent = ((($allSpace - $FreeSpace)/$allSpace)*100)
-  return @($disk_used_percent.tostring("f2"))
+$disk = Get-WmiObject -Class win32_logicaldisk -filter "drivetype = 3"
+$allSpace = $disk.Size 
+$allSpace =(($allSpace | Measure-Object -Sum).sum /1gb)
+$FreeSpace = $disk.FreeSpace 
+$FreeSpace =(($FreeSpace | Measure-Object -Sum).sum /1gb)
+$disk_total_usage = "{0:0.0}" -f ((($allSpace - $FreeSpace)/$allSpace)*100)
+
+if ($disk_total_usage)
+{
+  Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "disk_total_usage $disk_total_usage"
 }
 
 # 获取tcp端口状态
@@ -68,7 +71,7 @@ netstat -ano|findstr /i "TCP "|findstr /i "LISTENING"|findstr -v "\[::\]" |
     if ($tcp)
     {
       $tcp_info='tcp_port_status{port="' + "$tcp" + '"}'
-      Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "$tcp_info 1`n"
+      Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$tcp_info 1"
     }
   }
 
@@ -82,7 +85,7 @@ netstat -ano|findstr /i "UDP "|findstr -v "\[::\]" |
     if ($udp)
     {
       $udp_info='udp_port_status{port="' + "$udp" + '"}'
-      Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "$udp_info 1`n"
+      Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$udp_info 1"
     }
   }
 
@@ -91,45 +94,28 @@ netstat -ano|findstr /i "UDP "|findstr -v "\[::\]" |
 
 #Get-WmiObject Win32_Service -filter "State = 'Running'" | % {
 #  $proc=$_.Name -replace '[ ]','_'
-#  Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "proc_status{proc=\"$proc\"} 1`n"
+#  Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "proc_status{proc=\"$proc\"} 1"
 #}
 
 
 # 获取网络连接状态
-
 
 $tcp_total= netstat -an ; $tcp_total=$tcp_total.count;
 $tcp_estab = netstat -an | select-string "ESTABLISHED";$tcp_estab=$tcp_estab.count;
 $tcp_synrecv = netstat -an | select-string "SYN_RECV";$tcp_synrecv=$tcp_synrecv.count;
 $tcp_timewait = netstat -an | select-string "TIME_WAIT";$tcp_timewait=$tcp_timewait.count;
 
-Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "tcp_total $tcp_total`n"
-Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "tcp_estab $tcp_estab`n"
-Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "tcp_synrecv $tcp_synrecv`n"
-Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "tcp_timewait $tcp_timewait`n"
+Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "tcp_total $tcp_total"
+Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "tcp_estab $tcp_estab"
+Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "tcp_synrecv $tcp_synrecv"
+Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "tcp_timewait $tcp_timewait"
 
 
 # 获取分区使用率
 
 gwmi win32_logicaldisk -filter "drivetype = 3" | % {
-  $disk_fs='disk_fs_usage{volume="' + $_.deviceid +'"} '+ (($_.size-$_.freespace)/$_.size*100).tostring("f2") + "`n"
-  Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "$disk_fs"
-}
-
-
-if ($(cpu_usage))
-{
-  Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "cpu_usage $(cpu_usage)`n"
-}
-
-if ($(mem_usage))
-{
-  Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "mem_usage $(mem_usage)`n"
-}
-
-if ($(disk_total_usage))
-{
-  Add-Content -Path "$output_file_tmp" -Encoding Ascii -NoNewline -Value "disk_total_usage $(disk_total_usage)`n"
+  $disk_fs='disk_fs_usage{volume="' + $_.deviceid +'"} '+ (($_.size-$_.freespace)/$_.size*100)
+  Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$disk_fs"
 }
 
 Move-Item "$output_file_tmp" "$output_file" -force
