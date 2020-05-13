@@ -11,9 +11,8 @@ flush privileges;
 
 剧本附件
 1：mysqld_exporter-0.12.1.linux-amd64.tar
-2：3306.cnf
-3：mysql_exporter.init
-4：mysqld_exporter.server
+2：mysql_exporter.init
+3：mysqld_exporter.server
 
 mysqld_exporter-0.12.1.linux-amd64官网下载地址，共参考：
 https://github.com/prometheus/mysqld_exporter/releases/download/v0.12.1/mysqld_exporter-0.12.1.linux-amd64.tar.gz
@@ -23,7 +22,10 @@ https://github.com/prometheus/mysqld_exporter/releases/download/v0.12.1/mysqld_e
 dest_path="/opt/exporter/"  #目标安装路径
 unarchive_file="mysqld_exporter-0.12.1.linux-amd64.tar.gz"  #压缩文件
 unzip_dir="mysqld_exporter-0.12.1.linux-amd64"   #解压目录
-my3306="3306.cnf"  #数据库配置文件
+my3306_host="172.31.173.22"
+my3306_port="3306"
+my3306_user="exporter"
+my3306_password="123456"
 
 
 剧本内容
@@ -38,7 +40,7 @@ my3306="3306.cnf"  #数据库配置文件
           - min
         
     - name: 关闭服务
-      shell: if [ ! -z "$(ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}')" ];then ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}'|xargs kill -9;fi
+      shell: ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}'|xargs kill -9 2>/dev/null
       ignore_errors: yes
 
     - name: 创建安装目录
@@ -59,8 +61,13 @@ my3306="3306.cnf"  #数据库配置文件
     - name: 设置执行权限
       shell: chmod -R 777 {{ dest_path }}
       
-    - name: 拷贝文件3306.cnf
-      shell: cp -f {{ dest_path }}/{{ my3306 }} {{ dest_path }}/mysqld_exporter/
+    - name: 生成3306.cnf配置
+      shell: |
+        echo "[client]" >{{ dest_path }}/mysqld_exporter/3306.cnf
+        echo "host={{my3306_host}}" >>{{ dest_path }}/mysqld_exporter/3306.cnf
+        echo "port={{my3306_port}}" >>{{ dest_path }}/mysqld_exporter/3306.cnf
+        echo "user={{my3306_user}}" >>{{ dest_path }}/mysqld_exporter/3306.cnf
+        echo "password={{my3306_password}}" >>{{ dest_path }}/mysqld_exporter/3306.cnf
 
     - name: 设置CentOS6开机启动
       shell: mv -f {{ dest_path }}/mysqld_exporter.init /etc/init.d/mysqld_exporter && chmod 777 /etc/init.d/mysqld_exporter
@@ -77,6 +84,9 @@ my3306="3306.cnf"  #数据库配置文件
     - name: CentOS7启动服务
       shell: systemctl enable mysqld_exporter.service && systemctl start mysqld_exporter.service
       when: ansible_service_mgr == 'systemd'
+      
+
+ 
       
 
  

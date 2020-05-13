@@ -109,3 +109,5 @@ ServerActive="172.31.173.22"
       shell: systemctl enable zabbix-agent.service && systemctl start zabbix-agent.service
       when: ansible_service_mgr == 'systemd'
       
+      
+      

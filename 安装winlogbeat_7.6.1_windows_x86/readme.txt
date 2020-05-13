@@ -78,3 +78,4 @@ conf_file="winlogbeat.yml"
     - name: 启动服务 
       win_shell: net start winlogbeat
 
+

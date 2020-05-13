@@ -66,3 +66,5 @@ exe_file="wmi_exporter-0.11.0-386.exe"  #源文件名
       ignore_errors: yes   
 
 
+
+

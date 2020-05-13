@@ -1,5 +1,0 @@
-[client]
-host=172.31.173.22
-port=3306
-user=exporter
-password=123456

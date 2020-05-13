@@ -23,7 +23,7 @@ Invoke-TimeOutCommand -Timeout 15 -ScriptBlock {
 
 $basedir="c:/Program Files (x86)/wmi_exporter/key"
 $output_file="$basedir/syskey.prom"
-$output_file_tmp="$basedir/syskey.prom.tmp"
+$output_file_tmp="$basedir/syskey.tmp"
 
 # 获取CPU使用率
 
@@ -97,7 +97,7 @@ foreach($file in tasklist /v /fo csv|convertfrom-csv|select '映像名称')
   $imagename = $File.映像名称
   if ($imagename)
   {
-    $imagename = 'proc_status{proc="' + "$imagename" + '"}'
+    $imagename = 'proc_status{name="' + "$imagename" + '"}'
     Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename 1"
   }
 }
@@ -107,7 +107,7 @@ foreach($file in tasklist /v /fo csv|convertfrom-csv|select 'imagename')
   $imagename = $File.imagename
   if ($imagename)
   {
-    $imagename = 'proc_status{proc="' + "$imagename" + '"}'
+    $imagename = 'proc_status{name="' + "$imagename" + '"}'
     Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename 1"
   }
 }
@@ -133,7 +133,9 @@ gwmi win32_logicaldisk -filter "drivetype = 3" | % {
   Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$disk_fs"
 }
 
-Move-Item "$output_file_tmp" "$output_file" -force
+Get-Content $output_file_tmp | Select-Object -unique|Set-content $output_file
+
+Remove-Item $output_file_tmp
 
 }
 

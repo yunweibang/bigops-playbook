@@ -31,30 +31,15 @@ unzip_dir="{{ unarchive_file | splitext | first | splitext | first }}"   #解压
       setup:
         gather_subset:
           - min
-        
-    - name: 安装ss
-      shell: |
-        if ! hash ss 2>/dev/null;then 
-          yum -y install iproute
-        fi
-    
-    - name: 安装mpstat
-      shell: |
-        if ! hash mpstat 2>/dev/null;then 
-          yum -y install sysstat
-        fi
       
     - name: 关闭服务
-      shell: |
-        if [ ! -z "$(ps aux|grep node_exporter|grep -v grep|awk '{print $2}')" ];then 
-          ps aux|grep node_exporter|grep -v grep|awk '{print $2}'|xargs kill -9
-        fi
+      shell: ps aux|grep node_exporter|grep -v grep|awk '{print $2}'|xargs kill -9 2>/dev/null
+      ignore_errors: yes
 
     - name: 创建安装目录
-      shell: |
-        if [ ! -d {{ dest_path }}/node_exporter/key/ ];then
-          mkdir -p {{ dest_path }}/node_exporter/key/
-        fi
+      shell: mkdir -p {{ dest_path }}/node_exporter/key/ 2>/dev/null
+      ignore_errors: yes
+
 
     - name: 上传文件到远程
       copy: src={{ item }} dest={{ dest_path }}
@@ -105,5 +90,8 @@ unzip_dir="{{ unarchive_file | splitext | first | splitext | first }}"   #解压
         systemctl enable node_exporter
         systemctl start node_exporter
       when: ansible_service_mgr == 'systemd'
+  
+
+
   
 

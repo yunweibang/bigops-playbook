@@ -1,19 +1,15 @@
 #!/bin/bash
 
-export PATH=/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/root/bin:/opt/bigops/bigagent/bin
+export PATH=/opt/bigops/bigagent/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/root/bin
 export CURL="curl -s --connect-timeout 3 -m 10 -X POST"
 
 memtotal=$(free -m | grep Mem | awk '{print $2}')
 memavailable=$(free -m | grep Mem | awk '{print $7}')
 echo ${memavailable} ${memtotal} | awk '{print "mem_usage "100 - ($1/$2 * 100.0)}' >/opt/exporter/node_exporter/key/syskey.prom.tmp
 
-
 if hash ss 2>/dev/null; then
     TCP_PORT=$(ss -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
     UDP_PORT=$(ss -nplu|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
-else
-    TCP_PORT=$(netstat -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
-    UDP_PORT=$(netstat -nplu|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
 fi
 
 if [ ! -z "${TCP_PORT}" ];then
