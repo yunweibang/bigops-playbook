@@ -40,7 +40,6 @@ unzip_dir="{{ unarchive_file | splitext | first | splitext | first }}"   #解压
       shell: mkdir -p {{ dest_path }}/node_exporter/key/ 2>/dev/null
       ignore_errors: yes
 
-
     - name: 上传文件到远程
       copy: src={{ item }} dest={{ dest_path }}
       with_fileglob:

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-export PATH=/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/root/bin:/opt/bigops/bigagent/bin
+export PATH=/opt/bigops/bigagent/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/root/bin

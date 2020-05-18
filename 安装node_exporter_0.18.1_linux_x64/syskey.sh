@@ -27,9 +27,9 @@ if [ ! -z "${PROCS}" ];then
 fi
 
 
-df -k|grep ^/dev/|awk '{print "disk_fs_usage{device=\""$1"\"}",$5}'|grep -v '^/dev/(sr|fb)'|sed 's/%//' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+df -k|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print "disk_fs_usage{device=\""$1"\"}",$5}'|sed 's/%//' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
-df -i|grep ^/dev/|awk '{print "disk_inode_usage{device=\""$1"\"}",$5}'|grep -v '^/dev/(sr|fb)'|sed 's/%//' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+df -i|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print "disk_inode_usage{device=\""$1"\"}",$5}'|sed 's/%//' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
 cat /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_readbytes{device=\"/dev/"$3"\"}",$6*512}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
@@ -44,8 +44,8 @@ logined_users_total=$(who |wc -l)
 echo "logical_cpu_total ${logical_cpu_total}" >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 echo "logined_users_total ${logined_users_total}" >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
-disk_used=$(df -m| awk 'BEGIN{sum=0}{if($3!~/anon/)sum+=$3}END{print sum}')
-disk_total=$(df -m| awk 'BEGIN{sum=0}{if($2!~/anon/)sum+=$2}END{print sum}')
+disk_used=$(df -m|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk 'BEGIN{sum=0}{if($3!~/anon/)sum+=$3}END{print sum}')
+disk_total=$(df -m|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk 'BEGIN{sum=0}{if($2!~/anon/)sum+=$2}END{print sum}')
 echo "${disk_used}" "${disk_total}"|awk '{print "disk_total_usage",$1/$2*100}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
 if hash ss 2>/dev/null; then
@@ -63,6 +63,6 @@ else
     echo "not found command mpstat, yum -y install sysstat"
 fi
 
-awk '{if($2 != "") print}' /opt/exporter/node_exporter/key/syskey.prom.tmp >/opt/exporter/node_exporter/key/syskey.prom
+awk '{if($2 ~ /^[0-9]/ && $3 == "") print}' /opt/exporter/node_exporter/key/syskey.prom.tmp >/opt/exporter/node_exporter/key/syskey.prom
 
 
