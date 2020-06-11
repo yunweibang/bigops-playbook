@@ -25,9 +25,9 @@ if [ ! -z "${PROCS}" ];then
 fi
 
 
-df -k|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print "disk_fs_usage{device=\""$1"\"}",$5}'|sed 's/%//' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+df -k|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print "disk_fs_usage{device=\""$1"\"}",$5}'|sed 's/%//'|awk '{if($2 ~/^[0-9]/) print}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
-df -i|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print "disk_inode_usage{device=\""$1"\"}",$5}'|sed 's/%//' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+df -i|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print "disk_inode_usage{device=\""$1"\"}",$5}'|sed 's/%//'|awk '{if($2 ~/^[0-9]/) print}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
 cat /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_readbytes{device=\"/dev/"$3"\"}",$6*512}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
@@ -56,6 +56,6 @@ echo "cpu_usage ${cpu_usage}" >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 megaraid_predictive_failure=$(MegaCli -PDList -aALL -NoLog |grep -E '^Predictive Failure'|awk '{print $NF}'|sort -r|head -n 1)
 echo "megaraid_predictive_failure ${megaraid_predictive_failure}" >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
-awk '{if($2 ~ /^[0-9]/ && $3 == "") print}' /opt/exporter/node_exporter/key/syskey.prom.tmp >/opt/exporter/node_exporter/key/syskey.prom
+awk '{if($2 ~ /^[0-9]/ && $3 == "") print}' /opt/exporter/node_exporter/key/syskey.prom.tmp|sort|uniq >/opt/exporter/node_exporter/key/syskey.prom
 
 
