@@ -25,7 +25,7 @@ start() {
   fi
  
   echo -n $"Starting node_exporter: "
-  daemonize -u ${DAEMON_USER} -p ${PID_FILE} -l ${LOCK_FILE} ${DAEMON} --collector.textfile.directory=/opt/exporter/node_exporter/key/
+  daemonize -u ${DAEMON_USER} -p ${PID_FILE} -l ${LOCK_FILE} ${DAEMON} --web.listen-address=0.0.0.0:9100 --collector.textfile.directory=/opt/exporter/node_exporter/key/
   RETVAL=$?
   echo ""
   return $RETVAL
