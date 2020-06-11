@@ -17,7 +17,7 @@ dest_path="c:/Program Files (x86)/"  #目标安装路径
 unarchive_file="winlogbeat-7.6.1-windows-x86.zip"  #源文件名
 unzip_dir="winlogbeat-7.6.1-windows-x86"
 conf_file="winlogbeat.yml"
-
+logstash_server="xxx.xxx.xxx.xxx:6515"
 
 剧本内容
 ---

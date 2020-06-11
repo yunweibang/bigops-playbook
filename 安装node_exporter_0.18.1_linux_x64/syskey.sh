@@ -7,10 +7,8 @@ memtotal=$(free -m | grep Mem | awk '{print $2}')
 memavailable=$(free -m | grep Mem | awk '{print $7}')
 echo ${memavailable} ${memtotal} | awk '{print "mem_usage "100 - ($1/$2 * 100.0)}' >/opt/exporter/node_exporter/key/syskey.prom.tmp
 
-if hash ss 2>/dev/null; then
-    TCP_PORT=$(ss -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
-    UDP_PORT=$(ss -nplu|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
-fi
+TCP_PORT=$(ss -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
+UDP_PORT=$(ss -nplu|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
 
 if [ ! -z "${TCP_PORT}" ];then
     echo "${TCP_PORT}"|awk '{print "tcp_port_status_{port=\""$1"\"} 1" }' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
@@ -48,20 +46,15 @@ disk_used=$(df -m|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk 'BEGIN{sum=0}{if($3!~
 disk_total=$(df -m|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk 'BEGIN{sum=0}{if($2!~/anon/)sum+=$2}END{print sum}')
 echo "${disk_used}" "${disk_total}"|awk '{print "disk_total_usage",$1/$2*100}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
-if hash ss 2>/dev/null; then
-  ss -s|awk '/estab/{print $2,$4,$10,$12}'|sed 's/[,/()]/ /g'|awk '{print "tcp_total "$1"\ntcp_estab "$2"\ntcp_synrecv "$3"\ntcp_timewait "$4}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
-else
-    echo "not found command ss, yum -y install iproute"
-fi
+ss -s|awk '/estab/{print $2,$4,$10,$12}'|sed 's/[,/()]/ /g'|awk '{print "tcp_total "$1"\ntcp_estab "$2"\ntcp_synrecv "$3"\ntcp_timewait "$4}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
 top -bn 1|grep -i tasks|awk '{print "proc_total "$2"\nproc_running "$4"\nproc_sleeping "$6"\nproc_zombie "$(NF-1)}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
-if hash mpstat 2>/dev/null; then
-    cpu_usage=$(mpstat -P ALL 1 15|awk '$1 ~ /:$/ && $2 ~ /all/ {print 100-$NF}')
-    echo "cpu_usage ${cpu_usage}" >>/opt/exporter/node_exporter/key/syskey.prom.tmp
-else
-    echo "not found command mpstat, yum -y install sysstat"
-fi
+cpu_usage=$(mpstat -P ALL 1 15|awk '$1 ~ /:$/ && $2 ~ /all/ {print 100-$NF}')
+echo "cpu_usage ${cpu_usage}" >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+
+megaraid_predictive_failure=$(MegaCli -PDList -aALL -NoLog |grep -E '^Predictive Failure'|awk '{print $NF}'|sort -r|head -n 1)
+echo "megaraid_predictive_failure ${megaraid_predictive_failure}" >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
 awk '{if($2 ~ /^[0-9]/ && $3 == "") print}' /opt/exporter/node_exporter/key/syskey.prom.tmp >/opt/exporter/node_exporter/key/syskey.prom
 
