@@ -25,7 +25,7 @@ ServerActive="172.31.173.22"
 
 
 剧本内容
-----
+---
 - hosts: all
   gather_facts: no
 
