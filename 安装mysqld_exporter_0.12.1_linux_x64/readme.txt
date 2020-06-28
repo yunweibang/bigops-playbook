@@ -48,7 +48,7 @@ my3306_password="123456"
       ignore_errors: yes
 
     - name: 上传文件到远程
-      copy: src={{ item }} dest={{ dest_path }}
+      synchronize: src={{ item }} dest={{ dest_path }}
       with_fileglob:
         - "{{ job_path }}/*"
     

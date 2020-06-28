@@ -41,7 +41,7 @@ unzip_dir="{{ unarchive_file | splitext | first | splitext | first }}"   #解压
       ignore_errors: yes
 
     - name: 上传文件到远程
-      copy: src={{ item }} dest={{ dest_path }}
+      synchronize: src={{ item }} dest={{ dest_path }}
       with_fileglob:
         - "{{ job_path }}/*"
     
@@ -89,6 +89,9 @@ unzip_dir="{{ unarchive_file | splitext | first | splitext | first }}"   #解压
         systemctl enable node_exporter
         systemctl start node_exporter
       when: ansible_service_mgr == 'systemd'
+  
+
+
   
 
 

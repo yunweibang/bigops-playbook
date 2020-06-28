@@ -54,16 +54,16 @@ ServerActive="172.31.173.22"
       ignore_errors: yes
 
     - name: 上传文件到远程
-      copy: src={{ item }} dest=/usr/bin/
+      synchronize: src={{ item }} dest=/usr/bin/
       with_items:
         - "{{ job_path }}/zabbix_sender"
         - "{{ job_path }}/zabbix_get"    
 
     - name: 上传文件到远程
-      copy: src={{ job_path }}/zabbix_agentd dest=/usr/sbin/
+      synchronize: src={{ job_path }}/zabbix_agentd dest=/usr/sbin/
 
     - name: 上传文件到远程
-      copy: src={{ item }} dest={{ dest_path }}
+      synchronize: src={{ item }} dest={{ dest_path }}
       with_items: 
         - "{{ job_path }}/zabbix_agentd.conf"
         - "{{ job_path }}/zabbix-agent.init"
