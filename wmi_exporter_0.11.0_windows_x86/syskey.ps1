@@ -112,6 +112,15 @@ foreach($file in tasklist /v /fo csv|convertfrom-csv|select 'imagename')
   }
 }
 
+foreach($file in tasklist /v /fo csv|convertfrom-csv|select 'Image Name')
+{
+  $imagename = $File.imagename
+  if ($imagename)
+  {
+    $imagename = 'proc_status{name="' + "$imagename" + '"}'
+    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename 1"
+  }
+}
 
 # 获取网络连接状态
 
