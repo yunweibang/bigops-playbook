@@ -94,31 +94,31 @@ netstat -ano|findstr /i "UDP "|findstr -v "\[::\]" |
 
 foreach($file in tasklist /v /fo csv|convertfrom-csv|select '映像名称')
 {
-  $imagename = $File.映像名称
-  if ($imagename)
+  $imagename1 = "$File.映像名称"
+  if ($imagename1)
   {
-    $imagename = 'proc_status{name="' + "$imagename" + '"}'
-    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename 1"
+    $imagename1 = 'proc_status{name="' + "$imagename1" + '"}'
+    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename1 1"
   }
 }
 
 foreach($file in tasklist /v /fo csv|convertfrom-csv|select 'imagename')
 {
-  $imagename = $File.imagename
-  if ($imagename)
+  $imagename2 = "$File.imagename"
+  if ($imagename2)
   {
-    $imagename = 'proc_status{name="' + "$imagename" + '"}'
-    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename 1"
+    $imagename2 = 'proc_status{name="' + "$imagename2" + '"}'
+    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename2 1"
   }
 }
 
 foreach($file in tasklist /v /fo csv|convertfrom-csv|select 'Image Name')
 {
-  $imagename = $File.imagename
-  if ($imagename)
+  $imagename3 = "$File.Image Name"
+  if ($imagename3)
   {
-    $imagename = 'proc_status{name="' + "$imagename" + '"}'
-    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename 1"
+    $imagename3 = 'proc_status{name="' + "$imagename3" + '"}'
+    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename3 1"
   }
 }
 
