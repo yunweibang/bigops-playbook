@@ -31,7 +31,15 @@ unzip_dir="{{ unarchive_file | splitext | first | splitext | first }}"   #解压
       setup:
         gather_subset:
           - min
-      
+    
+    - name: 安装daemonize
+      shell: "if ! hash daemonize 2>/dev/null && hash yum 2>/dev/null;then timeout 60 yum -y install daemonize;fi"
+      ignore_errors: yes
+
+    - name: 运安装daemonize
+      shell: "if ! hash daemonize 2>/dev/null && hash apt-get 2>/dev/null;then timeout 60 apt-get -y install daemonize;fi"
+      ignore_errors: yes
+         
     - name: 关闭服务
       shell: ps aux|grep node_exporter|grep -v grep|awk '{print $2}'|xargs kill -9 2>/dev/null
       ignore_errors: yes
