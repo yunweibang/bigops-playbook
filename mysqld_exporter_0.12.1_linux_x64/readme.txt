@@ -22,10 +22,6 @@ https://github.com/prometheus/mysqld_exporter/releases/download/v0.12.1/mysqld_e
 dest_path="/opt/exporter/"  #目标安装路径
 unarchive_file="mysqld_exporter-0.12.1.linux-amd64.tar.gz"  #压缩文件
 unzip_dir="mysqld_exporter-0.12.1.linux-amd64"   #解压目录
-my3306_host="172.31.173.22"
-my3306_port="3306"
-my3306_user="exporter"
-my3306_password="123456"
 
 
 剧本内容
@@ -60,14 +56,6 @@ my3306_password="123456"
 
     - name: 设置执行权限
       shell: chmod -R 777 {{ dest_path }}
-      
-    - name: 生成3306.cnf配置
-      shell: |
-        echo "[client]" >{{ dest_path }}/mysqld_exporter/3306.cnf
-        echo "host={{my3306_host}}" >>{{ dest_path }}/mysqld_exporter/3306.cnf
-        echo "port={{my3306_port}}" >>{{ dest_path }}/mysqld_exporter/3306.cnf
-        echo "user={{my3306_user}}" >>{{ dest_path }}/mysqld_exporter/3306.cnf
-        echo "password={{my3306_password}}" >>{{ dest_path }}/mysqld_exporter/3306.cnf
 
     - name: 设置CentOS6开机启动
       shell: mv -f {{ dest_path }}/mysqld_exporter.init /etc/init.d/mysqld_exporter && chmod 777 /etc/init.d/mysqld_exporter

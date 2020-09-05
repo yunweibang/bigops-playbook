@@ -73,7 +73,7 @@ logstash_server="xxx.xxx.xxx.xxx:6515"
         line: '  hosts: ["{{ logstash_server }}"]'
 
     - name: 注册服务 
-      win_shell: "& \'{{ dest_path }}/winlogbeat/install-service-winlogbeat.ps1\'"
+      win_shell: 'PowerShell.exe -file "{{ dest_path }}/winlogbeat/install-service-winlogbeat.ps1"'
 
     - name: 启动服务 
       win_shell: net start winlogbeat
