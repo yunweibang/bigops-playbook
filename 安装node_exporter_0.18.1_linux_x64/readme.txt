@@ -9,7 +9,7 @@ Linux
 2：syskey.sh
 3：userkey.sh
 4：node_exporter.service
-5：node_exporter
+5：node_exporter.init
 
 node_exporter-0.18.1.linux-amd64官网下载地址，供参考：
 https://github.com/prometheus/node_exporter/
