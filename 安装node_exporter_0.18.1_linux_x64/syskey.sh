@@ -24,18 +24,25 @@ if [ ! -z "${PROCS}" ];then
     echo "${PROCS}"|awk '{print "proc_status{name=\""$1"\"} 1" }' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 fi
 
-
 df -k|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print "disk_fs_usage{device=\""$1"\"}",$5}'|sed 's/%//'|awk '{if($2 ~/^[0-9]/) print}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
-
 df -i|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print "disk_inode_usage{device=\""$1"\"}",$5}'|sed 's/%//'|awk '{if($2 ~/^[0-9]/) print}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
-cat /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_readbytes{device=\"/dev/"$3"\"}",$6*512}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+grep -v 'dm-' /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_readbytes{device=\"/dev/"$3"\"}",$6*512}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+grep -v 'dm-' /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_writebytes{device=\"/dev/"$3"\"}",$10*512}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+grep -v 'dm-' /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_readiops{device=\"/dev/"$3"\"}",$4}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+grep -v 'dm-' /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_writeiops{device=\"/dev/"$3"\"}",$8}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
-cat /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_writebytes{device=\"/dev/"$3"\"}",$10*512}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+df -k|grep mapper|awk '{print $1}'|while read i
+do
+	if [ ! -z "$(echo "$i")" ];then
+	    DM=$(lvdisplay "$i"|grep 'Block device'|awk -F: '{print "dm-"$NF}')
+	    grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_readbytes{device=\""dev"\"}",$6*512}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+		grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_writebytes{device=\""dev"\"}",$10*512}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp 
+		grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_readiops{device=\""dev"\"}",$4}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp 
+		grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_writeiops{device=\""dev"\"}",$8}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
+	fi
+done
 
-cat /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_readiops{device=\"/dev/"$3"\"}",$4}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
-
-cat /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_writeiops{device=\"/dev/"$3"\"}",$8}' >>/opt/exporter/node_exporter/key/syskey.prom.tmp
 
 logical_cpu_total=$(cat /proc/cpuinfo| grep "processor"|wc -l)
 logined_users_total=$(who |wc -l)
