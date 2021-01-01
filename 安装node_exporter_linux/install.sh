@@ -14,13 +14,13 @@ tar zxvf node_exporter-0.18.1.linux-amd64.tar.gz
 cp -f node_exporter-0.18.1.linux-amd64/node_exporter /opt/exporter/node_exporter/
 sudo mv -f /opt/exporter/syskey.sh /opt/exporter/node_exporter/key/
 sudo mv -f /opt/exporter/userkey.sh /opt/exporter/node_exporter/key/
-chmod +x /opt/exporter/node_exporter/key/
+sudo chmod +x /opt/exporter/node_exporter/key/
 
 timeout 30 /bin/bash /opt/exporter/node_exporter/key/*key.sh
 
 if ! hash systemctl 2>/dev/null;then 
 	if [ ! -f /usr/sbin/daemonize ];then
-    	rpm -ivh daemonize-1.7.3-7.el6.x86_64.rpm
+    	sudo rpm -ivh daemonize-1.7.3-7.el6.x86_64.rpm
 	fi
     sudo mv -f /opt/exporter/node_exporter.init /etc/init.d/node_exporter
     sudo chmod 777 /etc/init.d/node_exporter

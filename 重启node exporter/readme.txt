@@ -1,6 +1,5 @@
 作业名称：重启node exporter
 
-注意：作业名称必须带关键字exporter
 
 系统类型：
 Linux

@@ -1,0 +1,73 @@
+#!/bin/bash
+#
+#	/etc/rc.d/init.d/redis_exporter
+#
+# chkconfig: 2345 80 80
+#
+ 
+# Source function library.
+. /etc/init.d/functions
+
+
+RETVAL=0
+PROG="redis_exporter"
+
+DAEMON=/opt/exporter/redis_exporter/redis_exporter
+PID_FILE=/var/run/${PROG}.pid
+LOCK_FILE=/var/lock/subsys/${PROG}
+
+DAEMON_USER="root"
+
+start() {
+  if check_status > /dev/null; then
+    echo "redis_exporter is already running"
+    exit 0
+  fi
+ 
+  echo -n $"Starting redis_exporter: "
+  daemonize -u ${DAEMON_USER} -p ${PID_FILE} -l ${LOCK_FILE} ${DAEMON} -redis.addr localhost:6379 -redis.password 123456
+  RETVAL=$?
+  echo ""
+  return $RETVAL
+}
+ 
+stop() {
+    echo -n $"Stopping redis_exporter: "
+    killproc -p ${PID_FILE} -d 10 ${DAEMON}
+    RETVAL=$?
+    echo
+    [ $RETVAL = 0 ] && rm -f ${LOCK_FILE} ${PID_FILE}
+    return $RETVAL
+}
+ 
+check_status() {
+    status -p ${PID_FILE} ${DAEMON}
+    RETVAL=$?
+    return $RETVAL
+}
+ 
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+	check_status
+        ;;
+    reload|force-reload)
+        reload
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        N=/etc/init.d/${NAME}
+        echo "Usage: $N {start|stop|status|restart|force-reload}" >&2
+        RETVAL=2
+        ;;
+esac
+ 
+exit ${RETVAL}
