@@ -5,10 +5,10 @@
 Linux
 
 变量内容
-logstash_ip="172.31.173.22"  #Logstash服务器IP，设置为你自己的
-logstash_port="6514"  #Logstash服务器端口
-facility='*'  #程序模块
-priority="notice"  #日志级别
+logstash_ip="xxx.xxx.xxx.xxx"
+logstash_port="6514"
+facility='*'
+priority="notice"
 
 
 剧本内容
@@ -17,6 +17,14 @@ priority="notice"  #日志级别
   gather_facts: no
 
   tasks:
+    - name: 授权目录
+      shell: sudo chmod 777 /etc/rsyslog.d
+
+    - name: 授权目录
+      shell: ls -l /etc/rsyslog.d
+      register: list
+    - debug: var=list.stdout_lines
+
     - name: 生成配置文件
       shell: echo "{{ facility }}.{{ priority }} @@{{ logstash_ip }}:{{ logstash_port }}" > /etc/rsyslog.d/bigops.conf
 
@@ -26,9 +34,7 @@ priority="notice"  #日志级别
     - debug: var=rsyslog.stdout_lines
 
     - name: 重启服务
-      action: service
-        name=rsyslog
-        state=restarted
+      shell: if [ -f /usr/bin/systemctl ];then sudo systemctl restart rsyslog;else sudo service rsyslog restart;fi
 
     - name: 发送测试信息
       shell: logger -i -t 'bigops' -p local3.error 'bigops test'
