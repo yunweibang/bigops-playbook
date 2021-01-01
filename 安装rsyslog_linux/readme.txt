@@ -1,5 +1,5 @@
 作业名称：
-设置rsyslog
+设置rsyslog_linux
 
 系统类型：
 Linux

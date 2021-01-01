@@ -27,7 +27,6 @@ else
     sed -i "s/-redis.password 123456/-redis.password "$2"/g" /opt/exporter/redis_exporter.service
 fi
 
-
 if ! hash systemctl 2>/dev/null;then 
     if [ ! -f /usr/sbin/daemonize ];then
         sudo rpm -ivh daemonize-1.7.3-7.el6.x86_64.rpm

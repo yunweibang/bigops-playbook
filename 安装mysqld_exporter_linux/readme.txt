@@ -1,5 +1,5 @@
 作业名称：
-安装mysqld_exporter-0.12.1.linux-amd64
+安装mysqld_exporter_linux
 
 系统类型：
 Linux

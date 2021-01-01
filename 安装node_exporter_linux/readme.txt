@@ -1,5 +1,5 @@
 作业名称：
-安装node_exporter-0.18.1.linux-amd64
+安装node_exporter_linux
 
 系统类型：
 Linux

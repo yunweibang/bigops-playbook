@@ -1,5 +1,5 @@
 作业名称：
-安装redis_exporter
+安装redis_exporter_linux
 
 系统类型：
 Linux
@@ -48,7 +48,8 @@ dest_path="/opt/exporter/"
         - "{{ job_path }}/*"
     
     - name: 安装    
-      shell: /bin/sh {{ dest_path }}/install.sh {{ redis.addr }} {{ redis.password }}
+      shell: /bin/sh {{ dest_path }}/install.sh {{ redis_addr }} {{ redis_password }}
+ 
       
 
 

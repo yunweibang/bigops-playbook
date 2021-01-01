@@ -1,5 +1,5 @@
 作业名称：
-安装zabbix_agent-4.4.6-linux-x86_64
+安装zabbix_agent_linux
 
 系统类型：
 Linux

@@ -1,5 +1,5 @@
 作业名称：
-安装wmi_exporter-0.11.0-386
+安装wmi_exporter_windows
 
 系统类型：
 Windows

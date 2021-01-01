@@ -1,5 +1,5 @@
 作业名称：
-安装winlogbeat-7.6.1-windows-x86
+安装winlogbeat_windows
 
 系统类型：
 Windows
