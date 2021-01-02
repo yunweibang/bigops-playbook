@@ -16,7 +16,7 @@ https://github.com/oliver006/redis_exporter
 
 
 主机变量
-redis_addr="localhost:6379"
+redis_addr="localhost:9121"
 redis_password=""
 
 全局变量

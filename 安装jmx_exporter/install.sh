@@ -17,8 +17,8 @@ fi
 cp -f redis_exporter-v1.15.0.linux-amd64/redis_exporter /opt/exporter/redis_exporter/
 sudo chmod -R 777 /opt/exporter/redis_exporter/
 
-sed -i "s/localhost:9121/"$1"/g" /opt/exporter/redis_exporter.init
-sed -i "s/localhost:9121/"$1"/g" /opt/exporter/redis_exporter.service
+sed -i "s/localhost:6379/"$1"/g" /opt/exporter/redis_exporter.init
+sed -i "s/localhost:6379/"$1"/g" /opt/exporter/redis_exporter.service
 if [ -z "$2" ];then
     sed -i "s/ -redis.password 123456//g" /opt/exporter/redis_exporter.init
     sed -i "s/ -redis.password 123456//g" /opt/exporter/redis_exporter.service

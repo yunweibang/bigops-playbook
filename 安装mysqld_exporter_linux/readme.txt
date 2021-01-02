@@ -1,8 +1,6 @@
 作业名称：
 安装mysqld_exporter_linux
 
-系统类型：
-Linux
 
 添加数据库监控用户，your_password是你的数据库连接密码
 CREATE USER `exporter`@`%` IDENTIFIED BY 'your_password';
