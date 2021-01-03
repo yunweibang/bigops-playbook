@@ -1,9 +1,0 @@
-[Service]
-User=root
-Group=root
-ExecStart=/opt/exporter/redis_exporter/redis_exporter -redis.addr localhost:6379 -redis.password 123456
-ExecStop=/usr/bin/killall redis_exporter
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target

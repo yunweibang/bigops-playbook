@@ -11,25 +11,19 @@ ps aux|grep mysqld_exporter|grep -v grep|awk '{print $2}'|xargs kill -9 2>/dev/n
 
 cd /opt/exporter/
 tar zxvf mysqld_exporter-0.12.1.linux-amd64.tar.gz
-if [ ! -d /opt/exporter/mysqld_exporter ];then
-    mkdir /opt/exporter/mysqld_exporter
-fi
-cp -f mysqld_exporter-0.12.1.linux-amd64/mysqld_exporter /opt/exporter/mysqld_exporter/
-sudo chmod -R 777 /opt/exporter/mysqld_exporter/
+cp -f mysqld_exporter-0.12.1.linux-amd64/mysqld_exporter /opt/exporter/
 
-echo [client] > /opt/exporter/mysqld_exporter/"$4"
-echo host="$1" >> /opt/exporter/mysqld_exporter/"$4"
-echo user="$2" >> /opt/exporter/mysqld_exporter/"$4"
-echo password="$3" >> /opt/exporter/mysqld_exporter/"$4"
+echo [client] > /opt/exporter/"$4"
+echo host="$1" >> /opt/exporter/"$4"
+echo user="$2" >> /opt/exporter/"$4"
+echo password="$3" >> /opt/exporter/"$4"
 
 if ! hash systemctl 2>/dev/null;then 
-	if [ ! -f /usr/sbin/daemonize ];then
-    	sudo rpm -ivh daemonize-1.7.3-7.el6.x86_64.rpm
-	fi
     sudo cp -f /opt/exporter/mysqld_exporter.init /etc/init.d/mysqld_exporter
     sudo chmod 777 /etc/init.d/mysqld_exporter
     sudo chkconfig mysqld_exporter on
     sudo service mysqld_exporter start
+    sudo systemctl daemon-reload
 fi
 
 if hash systemctl 2>/dev/null;then 

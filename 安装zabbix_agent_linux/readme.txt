@@ -1,10 +1,6 @@
 作业名称：
 安装zabbix_agent_linux
 
-系统类型：
-Linux
-
-
 剧本附件
 1：zabbix_agentd
 2：zabbix_get

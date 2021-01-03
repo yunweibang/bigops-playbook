@@ -1,10 +1,6 @@
 作业名称：
 安装winlogbeat_windows
 
-系统类型：
-Windows
-
-
 剧本附件
 1：winlogbeat-7.6.1-windows-x86.zip
 2：winlogbeat.yml

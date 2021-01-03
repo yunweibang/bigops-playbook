@@ -4,15 +4,14 @@
 
 
 下载jmx_prometheus_javaagent-0.3.1.jar
-mkdir /opt/exporter/jmx_exporter/
-cd /opt/exporter/jmx_exporter/
+cd /opt/exporter/
 wget https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.3.1/jmx_prometheus_javaagent-0.3.1.jar
 
 
 tomcat.yml参考地址
 https://github.com/chanjarster/prometheus-learn/blob/master/jvm-monitoring/jmx-exporter-config.yml
 
-/opt/exporter/jmx_exporter/tomcat.yml内容如下:
+/opt/exporter/tomcat.yml内容如下:
 ---
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
@@ -25,7 +24,7 @@ rules:
 
 vim bin/catalina.sh
 
-CATALINA_OPTS="-Xms64m -Xmx2048m -javaagent:/opt/exporter/jmx_exporter/jmx_prometheus_javaagent-0.3.1.jar=9090:/opt/exporter/jmx_exporter/tomcat.yml"
+CATALINA_OPTS="-Xms64m -Xmx2048m -javaagent:/opt/exporter/jmx_exporter/jmx_prometheus_javaagent-0.3.1.jar=9090:/opt/exporter/tomcat.yml"
 
 9090是代理端口
 

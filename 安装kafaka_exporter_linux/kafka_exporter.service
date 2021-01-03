@@ -1,0 +1,9 @@
+[Service]
+User=root
+Group=root
+ExecStart=/opt/exporter/kafka_exporter --kafka.server=127.0.0.1:9092 --web.listen-address=":9308"
+ExecStop=/usr/bin/killall kafka_exporter
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

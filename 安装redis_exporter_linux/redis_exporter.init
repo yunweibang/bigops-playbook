@@ -12,7 +12,7 @@
 RETVAL=0
 PROG="redis_exporter"
 
-DAEMON=/opt/exporter/redis_exporter/redis_exporter
+DAEMON=/opt/exporter/redis_exporter
 PID_FILE=/var/run/${PROG}.pid
 LOCK_FILE=/var/lock/subsys/${PROG}
 

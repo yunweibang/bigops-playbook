@@ -11,21 +11,22 @@ ps aux|grep node_exporter|grep -v grep|awk '{print $2}'|xargs kill -9 2>/dev/nul
 
 cd /opt/exporter/
 tar zxvf node_exporter-0.18.1.linux-amd64.tar.gz
-cp -f node_exporter-0.18.1.linux-amd64/node_exporter /opt/exporter/node_exporter/
-sudo mv -f /opt/exporter/syskey.sh /opt/exporter/node_exporter/key/
-sudo mv -f /opt/exporter/userkey.sh /opt/exporter/node_exporter/key/
-sudo chmod +x /opt/exporter/node_exporter/key/
+cp -f node_exporter-0.18.1.linux-amd64/node_exporter /opt/exporter/
+if [ ! -d /opt/exporter/key/ ];then
+    mkdir /opt/exporter/key/
+fi
+sudo mv -f /opt/exporter/syskey.sh sudo systemctl daemon-reload
+sudo mv -f /opt/exporter/userkey.sh /opt/exporter/key/
+sudo chmod +x /opt/exporter/key/
 
-timeout 30 /bin/bash /opt/exporter/node_exporter/key/*key.sh
+timeout 30 /bin/bash /opt/exporter/key/*key.sh
 
 if ! hash systemctl 2>/dev/null;then 
-	if [ ! -f /usr/sbin/daemonize ];then
-    	sudo rpm -ivh daemonize-1.7.3-7.el6.x86_64.rpm
-	fi
     sudo mv -f /opt/exporter/node_exporter.init /etc/init.d/node_exporter
     sudo chmod 777 /etc/init.d/node_exporter
     sudo chkconfig node_exporter on
     sudo service node_exporter start
+    sudo systemctl daemon-reload
 fi
 
 if hash systemctl 2>/dev/null;then 

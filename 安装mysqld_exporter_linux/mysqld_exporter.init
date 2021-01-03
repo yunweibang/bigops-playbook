@@ -12,7 +12,7 @@
 RETVAL=0
 PROG="mysqld_exporter"
 
-DAEMON=/opt/exporter/mysqld_exporter/mysqld_exporter
+DAEMON=/opt/exporter/mysqld_exporter
 PID_FILE=/var/run/${PROG}.pid
 LOCK_FILE=/var/lock/subsys/${PROG}
 
@@ -25,7 +25,7 @@ start() {
   fi
  
   echo -n $"Starting mysqld_exporter: "
-  daemonize -u ${DAEMON_USER} -p ${PID_FILE} -l ${LOCK_FILE} ${DAEMON} --web.listen-address=0.0.0.0:9104 --config.my-cnf="/opt/exporter/mysqld_exporter/3306.cnf"
+  daemonize -u ${DAEMON_USER} -p ${PID_FILE} -l ${LOCK_FILE} ${DAEMON} --web.listen-address=0.0.0.0:9104 --config.my-cnf="/opt/exporter/3306.cnf"
   RETVAL=$?
   echo ""
   return $RETVAL

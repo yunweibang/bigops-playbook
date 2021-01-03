@@ -1,13 +1,9 @@
 作业名称：重启node exporter
 
 
-系统类型：
-Linux
-
 剧本内容
 ---
-- name: example
-  hosts: all
+- hosts: all
   gather_facts: no
 
   tasks:

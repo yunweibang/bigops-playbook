@@ -30,22 +30,9 @@ dest_path="/opt/exporter/"
 剧本内容
 ---
 - hosts: all
-  gather_facts: true
+  gather_facts: no
 
   tasks:
-    - name: 收集信息
-      setup:
-        gather_subset:
-          - min
-
-    - name: 创建安装目录
-      shell: mkdir -p {{ dest_path }}/mysqld_exporter 2>/dev/null
-      ignore_errors: yes
-
-    - name: 授权安装目录
-      shell: sudo chmod 777 /opt {{ dest_path }} 2>/dev/null
-      ignore_errors: yes
-
     - name: 上传文件到远程
       copy: src={{ item }} dest={{ dest_path }}
       with_fileglob:

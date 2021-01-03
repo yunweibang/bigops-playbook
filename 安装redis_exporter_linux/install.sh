@@ -11,14 +11,11 @@ ps aux|grep redis_exporter|grep -v grep|awk '{print $2}'|xargs kill -9 2>/dev/nu
 
 cd /opt/exporter/
 tar zxvf redis_exporter-v1.15.0.linux-amd64.tar.gz
-if [ ! -d /opt/exporter/redis_exporter ];then
-    mkdir /opt/exporter/redis_exporter
-fi
-cp -f redis_exporter-v1.15.0.linux-amd64/redis_exporter /opt/exporter/redis_exporter/
-sudo chmod -R 777 /opt/exporter/redis_exporter/
+cp -f redis_exporter-v1.15.0.linux-amd64/redis_exporter /opt/exporter/
 
 sed -i "s/localhost:9121/"$1"/g" /opt/exporter/redis_exporter.init
 sed -i "s/localhost:9121/"$1"/g" /opt/exporter/redis_exporter.service
+
 if [ -z "$2" ];then
     sed -i "s/ -redis.password 123456//g" /opt/exporter/redis_exporter.init
     sed -i "s/ -redis.password 123456//g" /opt/exporter/redis_exporter.service
@@ -28,13 +25,11 @@ else
 fi
 
 if ! hash systemctl 2>/dev/null;then 
-    if [ ! -f /usr/sbin/daemonize ];then
-        sudo rpm -ivh daemonize-1.7.3-7.el6.x86_64.rpm
-    fi
     sudo cp -f /opt/exporter/redis_exporter.init /etc/init.d/redis_exporter
     sudo chmod 777 /etc/init.d/redis_exporter
     sudo chkconfig redis_exporter on
     sudo service redis_exporter start
+    sudo systemctl daemon-reload
 fi
 
 if hash systemctl 2>/dev/null;then 
