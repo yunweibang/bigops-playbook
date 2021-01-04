@@ -7,6 +7,10 @@ if [ `arch` != "x86_64" ];then
     exit
 fi
 
+if [ -d /opt/exporter/node_exporter ];then
+    rm -rf /opt/exporter/node_exporter
+fi
+
 ps aux|grep node_exporter|grep -v grep|awk '{print $2}'|xargs kill -9 2>/dev/null
 
 cd /opt/exporter/
@@ -26,13 +30,13 @@ if ! hash systemctl 2>/dev/null;then
     sudo chmod 777 /etc/init.d/node_exporter
     sudo chkconfig node_exporter on
     sudo service node_exporter start
-    sudo systemctl daemon-reload
 fi
 
 if hash systemctl 2>/dev/null;then 
     sudo mv -f /opt/exporter/node_exporter.service /usr/lib/systemd/system/
     sudo systemctl enable node_exporter
     sudo systemctl start node_exporter
+    sudo systemctl daemon-reload
 fi
 
 
