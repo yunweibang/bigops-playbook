@@ -49,9 +49,14 @@ logined_users_total=$(who |wc -l)
 echo "logical_cpu_total ${logical_cpu_total}" >>/opt/exporter/key/syskey.prom.tmp
 echo "logined_users_total ${logined_users_total}" >>/opt/exporter/key/syskey.prom.tmp
 
-disk_used=$(df -m|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk 'BEGIN{sum=0}{if($3!~/anon/)sum+=$3}END{print sum}')
-disk_total=$(df -m|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk 'BEGIN{sum=0}{if($2!~/anon/)sum+=$2}END{print sum}')
-echo "${disk_used}" "${disk_total}"|awk '{print "disk_total_usage",$1/$2*100}' >>/opt/exporter/key/syskey.prom.tmp
+#disk_used=$(df -m|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk 'BEGIN{sum=0}{if($3!~/anon/)sum+=$3}END{print sum}')
+#disk_total=$(df -m|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk 'BEGIN{sum=0}{if($2!~/anon/)sum+=$2}END{print sum}')
+#echo "${disk_used}" "${disk_total}"|awk '{print "disk_total_usage",$1/$2*100}' >>/opt/exporter/key/syskey.prom.tmp
+
+disk_size_max_usage=$(df -k|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print $5}'|sed 's/%//g'|sort -r|head -n 1)
+disk_inode_max_usage=$(df -i|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print $5}'|sed 's/%//g'|sort -r|head -n 1)
+echo "disk_size_max_usage ${disk_size_max_usage}" >>/opt/exporter/key/syskey.prom.tmp
+echo "disk_inode_max_usage ${disk_inode_max_usage}" >>/opt/exporter/key/syskey.prom.tmp
 
 if [ ! -z "$(lsb_release -a|grep -i ^Release|awk '{print $2}'|grep ^6)" ];then 
     ss_c6 -s|awk '/estab/{print $2,$4,$10,$12}'|sed 's/[,/()]/ /g'|awk '{print "tcp_total "$1"\ntcp_estab "$2"\ntcp_synrecv "$3"\ntcp_timewait "$4}' >>/opt/exporter/key/syskey.prom.tmp

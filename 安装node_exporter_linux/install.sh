@@ -15,9 +15,9 @@ cp -f node_exporter-0.18.1.linux-amd64/node_exporter /opt/exporter/
 if [ ! -d /opt/exporter/key/ ];then
     mkdir /opt/exporter/key/
 fi
-sudo mv -f /opt/exporter/syskey.sh sudo systemctl daemon-reload
+sudo mv -f /opt/exporter/syskey.sh /opt/exporter/key/
 sudo mv -f /opt/exporter/userkey.sh /opt/exporter/key/
-sudo chmod +x /opt/exporter/key/
+sudo chmod +x /opt/exporter/key/*
 
 timeout 30 /bin/bash /opt/exporter/key/*key.sh
 
