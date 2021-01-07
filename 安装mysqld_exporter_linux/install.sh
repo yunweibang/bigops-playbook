@@ -23,11 +23,11 @@ if ! hash systemctl 2>/dev/null;then
     sudo chmod 777 /etc/init.d/mysqld_exporter
     sudo chkconfig mysqld_exporter on
     sudo service mysqld_exporter start
-    sudo systemctl daemon-reload
 fi
 
 if hash systemctl 2>/dev/null;then 
     sudo cp -f /opt/exporter/mysqld_exporter.service /usr/lib/systemd/system/
+    sudo systemctl daemon-reload
     sudo systemctl enable mysqld_exporter
     sudo systemctl start mysqld_exporter
 fi

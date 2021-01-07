@@ -29,11 +29,11 @@ if ! hash systemctl 2>/dev/null;then
     sudo chmod 777 /etc/init.d/redis_exporter
     sudo chkconfig redis_exporter on
     sudo service redis_exporter start
-    sudo systemctl daemon-reload
 fi
 
 if hash systemctl 2>/dev/null;then 
     sudo cp -f /opt/exporter/redis_exporter.service /usr/lib/systemd/system/
+    sudo systemctl daemon-reload
     sudo systemctl enable redis_exporter
     sudo systemctl start redis_exporter
 fi

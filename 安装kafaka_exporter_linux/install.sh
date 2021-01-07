@@ -18,11 +18,11 @@ if ! hash systemctl 2>/dev/null;then
     sudo chmod 777 /etc/init.d/kafka_exporter
     sudo chkconfig kafka_exporter on
     sudo service kafka_exporter start
-    sudo systemctl daemon-reload
 fi
 
 if hash systemctl 2>/dev/null;then 
     sudo cp -f /opt/exporter/kafka_exporter.service /usr/lib/systemd/system/
+    sudo systemctl daemon-reload
     sudo systemctl enable kafka_exporter
     sudo systemctl start kafka_exporter
 fi

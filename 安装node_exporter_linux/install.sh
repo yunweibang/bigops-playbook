@@ -34,9 +34,9 @@ fi
 
 if hash systemctl 2>/dev/null;then 
     sudo mv -f /opt/exporter/node_exporter.service /usr/lib/systemd/system/
+    sudo systemctl daemon-reload
     sudo systemctl enable node_exporter
     sudo systemctl start node_exporter
-    sudo systemctl daemon-reload
 fi
 
 

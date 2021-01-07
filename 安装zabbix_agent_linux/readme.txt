@@ -25,7 +25,6 @@ make install
 
 
 变量内容
-dest_path="/etc/zabbix/"  #目标安装路径
 Server="172.31.173.22"
 ServerActive="172.31.173.22"
 
@@ -36,34 +35,28 @@ ServerActive="172.31.173.22"
   gather_facts: no
   
   tasks:
-    - name: 收集信息
-      setup:
-        gather_subset:
-          - min
-          
-    - name: 关闭服务
-      shell: if [ ! -z "$(ps aux|grep zabbix_agentd|grep -v grep|awk '{print $2}')" ];then ps aux|grep zabbix_agentd|grep -v grep|awk '{print $2}'|xargs kill -9;fi
-      ignore_errors: yes
-    
-    - name: 创建安装目录
-      shell: mkdir -p {{ dest_path }}
-      ignore_errors: yes
-
-    - name: 上传文件到远程
-      synchronize: src={{ item }} dest=/usr/bin/
-      with_items:
+    - name: 上传文件到远程目录
+      copy: src={{ item }} dest=/usr/bin/
+      with_fileglob:
         - "{{ job_path }}/zabbix_sender"
-        - "{{ job_path }}/zabbix_get"    
+        - "{{ job_path }}/zabbix_get"
 
-    - name: 上传文件到远程
-      synchronize: src={{ job_path }}/zabbix_agentd dest=/usr/sbin/
+    - name: 上传文件到远程目录
+      copy: src={{ item }} dest=/usr/sbin/
+      with_fileglob:
+        - "{{ job_path }}/zabbix_sender"
+        - "{{ job_path }}/zabbix_get"
 
-    - name: 上传文件到远程
-      synchronize: src={{ item }} dest={{ dest_path }}
+    - name: 创建/etc/zabbix目录   
+      shell: if [ ! -d /etc/zabbix/ ];then mkdir /etc/zabbix/;fi
+
+    - name: 上传文件到远程目录
+      copy: src={{ item }} dest=/etc/zabbix/
       with_items: 
         - "{{ job_path }}/zabbix_agentd.conf"
         - "{{ job_path }}/zabbix-agent.init"
         - "{{ job_path }}/zabbix-agent.service"
+        - "{{ job_path }}/install.sh"
 
     - name: 设置权限
       shell: chmod 777 /usr/bin/zabbix_sender /usr/bin/zabbix_get /usr/sbin/zabbix_agentd
@@ -89,21 +82,9 @@ ServerActive="172.31.173.22"
         line: 'ServerActive={{ ServerActive }}'
         backrefs: no
 
-    - name: 设置CentOS6开机启动
-      shell: mv -f {{ dest_path }}/zabbix-agent.init /etc/init.d/zabbix-agent && chmod 777 /etc/init.d/zabbix-agent
-      when: ansible_service_mgr != 'systemd'
-      
-    - name: CentOS6启动服务
-      shell: chkconfig zabbix-agent on && service zabbix-agent start
-      when: ansible_service_mgr != 'systemd'
-      
-    - name: 设置CentOS7开机启动
-      shell: mv -f {{ dest_path }}/zabbix-agent.service /usr/lib/systemd/system/zabbix-agent.service
-      when: ansible_service_mgr == 'systemd'
+    - name: 安装    
+      shell: /bin/sh /etc/zabbix/install.sh
 
-    - name: CentOS7启动服务
-      shell: systemctl enable zabbix-agent.service && systemctl start zabbix-agent.service
-      when: ansible_service_mgr == 'systemd'
       
       
       
