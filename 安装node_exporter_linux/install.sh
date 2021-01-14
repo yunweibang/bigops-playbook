@@ -11,7 +11,7 @@ if [ -d /opt/exporter/node_exporter ];then
     rm -rf /opt/exporter/node_exporter
 fi
 
-ps aux|grep node_exporter|grep -v grep|awk '{print $2}'|xargs kill -9 2>/dev/null
+ps aux|grep '/opt/exporter'|grep -v grep|awk '{print $2}'|xargs sudo kill -9 2>/dev/null
 
 cd /opt/exporter/
 tar zxvf node_exporter-0.18.1.linux-amd64.tar.gz
