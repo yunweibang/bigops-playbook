@@ -9,8 +9,8 @@ winlogbeat官网下载地址，供参考：
 https://www.elastic.co/cn/downloads/beats/winlogbeat
 
 变量内容
-dest_path="c:/Program Files (x86)/"  #目标安装路径
-unarchive_file="winlogbeat-7.6.1-windows-x86.zip"  #源文件名
+dest_path="c:/Program Files (x86)/"
+unarchive_file="winlogbeat-7.6.1-windows-x86.zip"
 unzip_dir="winlogbeat-7.6.1-windows-x86"
 conf_file="winlogbeat.yml"
 logstash_server="xxx.xxx.xxx.xxx:6515"

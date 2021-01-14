@@ -14,8 +14,8 @@ https://github.com/martinlindhe/wmi_exporter/releases
 
 
 变量内容
-dest_path="c:/Program Files (x86)/wmi_exporter/"  #目标安装路径
-exe_file="wmi_exporter-0.11.0-386.exe"  #源文件名
+dest_path="c:/Program Files (x86)/wmi_exporter/"
+exe_file="wmi_exporter-0.11.0-386.exe"
 
 
 剧本内容
