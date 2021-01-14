@@ -7,9 +7,6 @@
 3：kafka_exporter.init
 4：install.sh
 
-全局变量
-dest_path="/opt/exporter/"
-
 剧本内容
 ---
 - hosts: all
@@ -17,12 +14,12 @@ dest_path="/opt/exporter/"
 
   tasks:      
     - name: 上传文件到远程目录
-      copy: src={{ item }} dest={{ dest_path }}
+      copy: src={{ item }} dest=/opt/exporter/
       with_fileglob:
         - "{{ job_path }}/*"
     
     - name: 安装    
-      shell: /bin/sh {{ dest_path }}/install.sh
+      shell: /bin/bash /opt/exporter/install.sh
  
       
 

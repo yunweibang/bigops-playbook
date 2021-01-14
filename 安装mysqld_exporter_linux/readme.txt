@@ -23,9 +23,6 @@ user="xxx"
 password="xxx"
 cnf="3306.cnf"
 
-全局变量
-dest_path="/opt/exporter/"
-
 
 剧本内容
 ---
@@ -34,10 +31,10 @@ dest_path="/opt/exporter/"
 
   tasks:
     - name: 上传文件到远程
-      copy: src={{ item }} dest={{ dest_path }}
+      copy: src={{ item }} dest=/opt/exporter/
       with_fileglob:
         - "{{ job_path }}/*"
 
     - name: 安装    
-      shell: /bin/sh {{ dest_path }}/install.sh {{ host }} {{ user }} {{ password }} {{ cnf }}
+      shell: /bin/bash /opt/exporter/install.sh {{ host }} {{ user }} {{ password }} {{ cnf }}
 

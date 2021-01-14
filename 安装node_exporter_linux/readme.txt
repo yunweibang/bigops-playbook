@@ -13,26 +13,28 @@ node_exporter-0.18.1.linux-amd64官网下载地址，供参考：
 https://github.com/prometheus/node_exporter/
 
 
-变量内容
-dest_path="/opt/exporter/"
-
-
 剧本内容
 ---
 - hosts: all
   gather_facts: no
 
   tasks:
+    - name: 创建exporter目录
+      shell: if [ ! -d /opt/exporter ];then sudo mkdir -p /opt/exporter;fi 
+
+    - name: 授权exporter权限
+      shell: sudo chmod 777 /opt/exporter
+
     - name: 上传文件到远程目录
-      copy: src={{ item }} dest={{ dest_path }}
+      copy: src={{ item }} dest=/opt/exporter
       with_fileglob:
         - "{{ job_path }}/*"
-    
+
     - name: 安装    
-      shell: /bin/sh {{ dest_path }}/install.sh
+      shell: /bin/bash /opt/exporter/install.sh
       
     - name: 添加cron
-      cron: name='node_exporter' minute=*/1 job='timeout 30 /bin/bash {{ dest_path }}/key/*key.sh >/dev/null 2>&1'
+      cron: name='node_exporter' minute=*/1 job='timeout 30 /bin/bash /opt/exporter/key/*key.sh >/dev/null 2>&1'
   
 
   

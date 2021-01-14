@@ -1,4 +1,4 @@
-作业名称：重启node exporter
+作业名称：重启node_exporter_linux
 
 
 剧本内容

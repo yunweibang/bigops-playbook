@@ -35,7 +35,7 @@ grep -v 'dm-' /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_writeiops{devi
 df -k|grep mapper|awk '{print $1}'|while read i
 do
 	if [ ! -z "$(echo "$i")" ];then
-	    DM=$(lvdisplay "$i"|grep 'Block device'|awk -F: '{print "dm-"$NF}')
+	    DM=$(sudo lvdisplay "$i"|grep 'Block device'|awk -F: '{print "dm-"$NF}')
 	    grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_readbytes{device=\""dev"\"}",$6*512}' >>/opt/exporter/key/syskey.prom.tmp
 		grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_writebytes{device=\""dev"\"}",$10*512}' >>/opt/exporter/key/syskey.prom.tmp 
 		grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_readiops{device=\""dev"\"}",$4}' >>/opt/exporter/key/syskey.prom.tmp 
@@ -71,8 +71,6 @@ echo "cpu_usage ${cpu_usage}" >>/opt/exporter/key/syskey.prom.tmp
 
 megaraid_predictive_failure=$(MegaCli -PDList -aALL -NoLog |grep -E '^Predictive Failure'|awk '{print $NF}'|sort -r|head -n 1)
 echo "megaraid_predictive_failure ${megaraid_predictive_failure}" >>/opt/exporter/key/syskey.prom.tmp
-
-echo "nginx_process_num `ps -C nginx --no-header| wc -l`"  >>/opt/exporter/key/syskey.prom.tmp
 
 awk '{if($2 ~ /^[0-9]/ && $3 == "") print}' /opt/exporter/key/syskey.prom.tmp|sort|uniq >/opt/exporter/key/syskey.prom
 

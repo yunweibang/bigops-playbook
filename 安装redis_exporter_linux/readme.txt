@@ -15,9 +15,6 @@ https://github.com/oliver006/redis_exporter
 redis_addr="localhost:9121"
 redis_password=""
 
-全局变量
-dest_path="/opt/exporter/"
-
 
 剧本内容
 ---
@@ -26,12 +23,12 @@ dest_path="/opt/exporter/"
 
   tasks:      
     - name: 上传文件到远程目录
-      copy: src={{ item }} dest={{ dest_path }}
+      copy: src={{ item }} dest=/opt/exporter/
       with_fileglob:
         - "{{ job_path }}/*"
     
     - name: 安装    
-      shell: /bin/sh {{ dest_path }}/install.sh {{ redis_addr }} {{ redis_password }}
+      shell: /bin/bash /opt/exporter/install.sh {{ redis_addr }} {{ redis_password }}
  
       
 
