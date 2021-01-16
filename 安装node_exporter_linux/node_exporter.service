@@ -2,7 +2,7 @@
 User=root
 Group=root
 ExecStart=/opt/exporter/node_exporter --web.listen-address=0.0.0.0:9100 --collector.textfile.directory=/opt/exporter/key/
-ExecStop=ps -ef|grep node_exporter|grep -v gitlab|awk '{print $2}'|xargs kill -9
+ExecStop=/usr/bin/killall node_exporter
 
 [Install]
 WantedBy=multi-user.target

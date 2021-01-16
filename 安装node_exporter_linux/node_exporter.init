@@ -34,7 +34,7 @@ start() {
 stop() {
     echo -n $"Stopping node_exporter: "
     #killproc -p ${PID_FILE} -d 10 ${DAEMON}
-    ps -ef|grep node_exporter|grep -v gitlab|awk '{print $2}'|xargs kill -9
+    /usr/bin/killall node_exporter
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && rm -f ${LOCK_FILE} ${PID_FILE}

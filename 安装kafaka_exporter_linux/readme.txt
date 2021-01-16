@@ -1,3 +1,4 @@
+
 作业名称：
 安装kafka_exporter_linux
 
@@ -5,7 +6,7 @@
 1：kafka_exporter-1.2.0.linux-amd64.tar.gz
 2：kafka_exporter.service
 3：kafka_exporter.init
-4：install.sh
+4：kafka_exporter.sh
 
 剧本内容
 ---
@@ -19,7 +20,7 @@
         - "{{ job_path }}/*"
     
     - name: 安装    
-      shell: /bin/bash /opt/exporter/install.sh
+      shell: /bin/bash /opt/exporter/kafka_exporter.sh
  
       
 

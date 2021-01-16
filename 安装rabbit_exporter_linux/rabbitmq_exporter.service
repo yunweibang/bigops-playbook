@@ -1,0 +1,14 @@
+[Service]
+User=root
+Group=root
+DefaultEnvironment='RABBIT_USER=guest RABBIT_PASSWORD=guest OUTPUT_FORMAT=JSON PUBLISH_PORT=9419 RABBIT_URL=http://localhost:15672'
+ExecStart=/opt/exporter/rabbitmq_exporter
+ExecStop=/usr/bin/killall rabbitmq_exporter
+
+[Install]
+WantedBy=multi-user.target
+
+[Unit]
+Description=rabbitmq_exporter
+After=network.target 
+

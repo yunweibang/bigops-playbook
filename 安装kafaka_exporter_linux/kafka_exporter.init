@@ -33,7 +33,8 @@ start() {
  
 stop() {
     echo -n $"Stopping kafka_exporter: "
-    killproc -p ${PID_FILE} -d 10 ${DAEMON}
+    #killproc -p ${PID_FILE} -d 10 ${DAEMON}
+    /usr/bin/killall kafka_exporter
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && rm -f ${LOCK_FILE} ${PID_FILE}

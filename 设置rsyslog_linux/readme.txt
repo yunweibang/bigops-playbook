@@ -1,8 +1,7 @@
+
 作业名称：
 设置rsyslog_linux
 
-系统类型：
-Linux
 
 变量内容
 logstash_ip="xxx.xxx.xxx.xxx"
@@ -18,15 +17,12 @@ priority="notice"
 
   tasks:
     - name: 授权目录
-      shell: sudo chmod 777 /etc/rsyslog.d
-
-    - name: 授权目录
       shell: ls -l /etc/rsyslog.d
       register: list
     - debug: var=list.stdout_lines
 
     - name: 生成配置文件
-      shell: echo "{{ facility }}.{{ priority }} @@{{ logstash_ip }}:{{ logstash_port }}" > /etc/rsyslog.d/bigops.conf
+      shell: sudo sh -c 'echo "{{ facility }}.{{ priority }} @@{{ logstash_ip }}:{{ logstash_port }}" > /etc/rsyslog.d/bigops.conf'
 
     - name: 查看配置文件
       shell: cat /etc/rsyslog.d/bigops.conf

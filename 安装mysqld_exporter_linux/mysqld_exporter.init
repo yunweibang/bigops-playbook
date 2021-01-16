@@ -33,7 +33,7 @@ start() {
  
 stop() {
     echo -n $"Stopping mysqld_exporter: "
-    killproc -p ${PID_FILE} -d 10 ${DAEMON}
+    /usr/bin/killall mysqld_exporter
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && rm -f ${LOCK_FILE} ${PID_FILE}
