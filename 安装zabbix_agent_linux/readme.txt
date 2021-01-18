@@ -28,9 +28,9 @@ make install
 5：zabbix-agent.sh
 
 
-变量内容：
-Server="172.31.173.22"
-ServerActive="172.31.173.22"
+主机变量或模板变量：
+Server=""
+ServerActive=""
 
 
 剧本内容：
@@ -87,7 +87,7 @@ ServerActive="172.31.173.22"
         backrefs: no
 
     - name: 安装    
-      shell: /bin/sh /etc/zabbix/zabbix-agent.sh
+      shell: /bin/bash /etc/zabbix/zabbix-agent.sh
 
       
       

@@ -1,19 +1,25 @@
 
 作业名称：
-安装node_exporter_linux
+安装oracle_exporter_linux
 
 
 官网地址：
-https://github.com/prometheus/node_exporter/
+https://github.com/iamseth/oracledb_exporter/releases
 
 
 剧本附件：
-1：node_exporter-0.18.1.linux-amd64.tar.gz
-2：node_exporter.service
-3：node_exporter.init
-4：node_exporter.sh
-5：syskey.sh
-6：userkey.sh
+1：oracledb_exporter.0.2.9-ora18.5.linux-amd64.tar.gz
+2：oracle_exporter.service
+3：oracle_exporter.init
+4：oracle_exporter.sh
+
+
+主机变量或模板变量：
+USER=""
+PASS=""
+HOST=""
+PORT="1521"
+SERVICE_NAME=""
 
 
 剧本内容：
@@ -34,11 +40,7 @@ https://github.com/prometheus/node_exporter/
         - "{{ job_path }}/*"
 
     - name: 安装    
-      shell: /bin/bash /opt/exporter/node_exporter.sh
-      
-    - name: 添加cron
-      cron: name='node_exporter' minute=*/1 job='timeout 30 /bin/bash /opt/exporter/key/*key.sh >/dev/null 2>&1'
-  
+      shell: /bin/bash /opt/exporter/oracle_exporter.sh {{ USER }} {{ PASS }} {{ HOST }} {{ PORT }} {{ SERVICE_NAME }}
 
   
 

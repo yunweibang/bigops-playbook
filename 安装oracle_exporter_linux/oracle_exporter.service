@@ -1,0 +1,14 @@
+[Service]
+User=root
+Group=root
+DefaultEnvironment='DATA_SOURCE_NAME=oracle_user/oracle_pass@//oracle_host:oracle_port/oracle_service'
+ExecStart=/opt/exporter/oracle_exporter --log.level error --web.listen-address 0.0.0.0:9161
+ExecStop=/usr/bin/killall oracle_exporter
+
+[Install]
+WantedBy=multi-user.target
+
+[Unit]
+Description=oracle_exporter
+After=network.target 
+

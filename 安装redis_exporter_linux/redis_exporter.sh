@@ -7,21 +7,26 @@ if [ `arch` != "x86_64" ];then
     exit
 fi
 
-ps aux|grep redis_exporter|grep -v grep|awk '{print \$2}'|xargs kill -9 2>/dev/null
+#awk里的$前必须加转义
+if [ ! -z "$(ps aux|grep '/opt/exporter/redis_exporter'|grep -v grep)" ];then
+    ps aux|grep '/opt/exporter/redis_exporter'|grep -v grep|awk '{print \$2}'|xargs sudo kill -9 >/dev/null 2>&1
+fi
 
 cd /opt/exporter/
 tar zxvf redis_exporter-v1.15.0.linux-amd64.tar.gz
 cp -f redis_exporter-v1.15.0.linux-amd64/redis_exporter /opt/exporter/
 
-sed -i "s/localhost:9121/"$1"/g" /opt/exporter/redis_exporter.init
-sed -i "s/localhost:9121/"$1"/g" /opt/exporter/redis_exporter.service
-
-if [ -z "$2" ];then
-    sed -i "s/ -redis.password 123456//g" /opt/exporter/redis_exporter.init
-    sed -i "s/ -redis.password 123456//g" /opt/exporter/redis_exporter.service
+如果redis密码为空
+if [ ! -z "$2" ];then
+    sed -i "s#redis_addr#$1#g" /opt/exporter/redis_exporter.init
+    sed -i "s#reids_pass#$2#g" /opt/exporter/redis_exporter.service
+    sed -i "s#redis_addr#$1#g" /opt/exporter/redis_exporter.init
+    sed -i "s#reids_pass#$2#g" /opt/exporter/redis_exporter.service
 else
-    sed -i "s/-redis.password 123456/-redis.password "$2"/g" /opt/exporter/redis_exporter.init
-    sed -i "s/-redis.password 123456/-redis.password "$2"/g" /opt/exporter/redis_exporter.service
+    sed -i "s#redis_addr#$1#g" /opt/exporter/redis_exporter.init
+    sed -i "s#-redis.password reids_pass##g" /opt/exporter/redis_exporter.service
+    sed -i "s#redis_addr#$1#g" /opt/exporter/redis_exporter.init
+    sed -i "s#-redis.password reids_pass##g" /opt/exporter/redis_exporter.service
 fi
 
 if ! hash systemctl 2>/dev/null;then 

@@ -11,11 +11,11 @@ TCP_PORT=$(ss -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
 UDP_PORT=$(ss -nplu|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
 
 if [ ! -z "${TCP_PORT}" ];then
-    echo "${TCP_PORT}"|awk '{print "tcp_port_status_{port=\""$1"\"} 1" }' >>/opt/exporter/key/syskey.prom.tmp
+    echo "${TCP_PORT}"|awk '{print "tcp_port_status{port=\""$1"\"} 1" }' >>/opt/exporter/key/syskey.prom.tmp
 fi
 
 if [ ! -z "${UDP_PORT}" ];then
-    echo "${UDP_PORT}"|awk '{print "udp_port_status_{port=\""$1"\"} 1" }' >>/opt/exporter/key/syskey.prom.tmp
+    echo "${UDP_PORT}"|awk '{print "udp_port_status{port=\""$1"\"} 1" }' >>/opt/exporter/key/syskey.prom.tmp
 fi
 
 PROCS=$(ps -eo "%c"|awk -F/ '{print $1}'|grep -Ev '(grep|COMMAND)' |sort|uniq)

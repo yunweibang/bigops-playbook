@@ -4,7 +4,7 @@
 
 
 变量内容
-logstash_ip="xxx.xxx.xxx.xxx"
+logstash_ip=""
 logstash_port="6514"
 facility='*'
 priority="notice"

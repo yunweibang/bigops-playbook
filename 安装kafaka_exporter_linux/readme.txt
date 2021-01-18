@@ -8,6 +8,11 @@
 3：kafka_exporter.init
 4：kafka_exporter.sh
 
+主机变量：
+kafka_ip="127.0.0.1"
+kafka_port="9092"
+
+
 剧本内容
 ---
 - hosts: all
@@ -20,7 +25,7 @@
         - "{{ job_path }}/*"
     
     - name: 安装    
-      shell: /bin/bash /opt/exporter/kafka_exporter.sh
+      shell: /bin/bash /opt/exporter/kafka_exporter.sh {{ kafka_ip }} {{ kafka_port }}
  
       
 

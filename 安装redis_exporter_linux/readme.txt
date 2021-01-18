@@ -1,3 +1,4 @@
+
 作业名称：
 安装redis_exporter_linux
 
@@ -15,7 +16,7 @@ https://github.com/oliver006/redis_exporter
 
 主机变量：
 redis_addr="localhost:9121"
-redis_password=""
+redis_pass=""
 
 
 剧本内容：
@@ -30,7 +31,7 @@ redis_password=""
         - "{{ job_path }}/*"
     
     - name: 安装    
-      shell: /bin/bash /opt/exporter/redis_exporter.sh {{ redis_addr }} {{ redis_password }}
+      shell: /bin/bash /opt/exporter/redis_exporter.sh {{ redis_addr }} {{ redis_pass }}
  
       
 

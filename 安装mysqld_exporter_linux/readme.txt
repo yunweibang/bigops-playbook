@@ -22,9 +22,9 @@ flush privileges;
 
 
 主机变量
-host="xxx.xxx.xxx.xxx"
-user="xxx"
-password="xxx"
+host=""
+user=""
+password=""
 cnf="3306.cnf"
 
 

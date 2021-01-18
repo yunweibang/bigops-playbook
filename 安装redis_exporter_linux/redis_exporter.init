@@ -25,7 +25,7 @@ start() {
   fi
  
   echo -n $"Starting redis_exporter: "
-  daemonize -u ${DAEMON_USER} -p ${PID_FILE} -l ${LOCK_FILE} ${DAEMON} -redis.addr localhost:9121 -redis.password 123456
+  daemonize -u ${DAEMON_USER} -p ${PID_FILE} -l ${LOCK_FILE} ${DAEMON} -redis.addr redis_addr -redis.password reids_pass
   RETVAL=$?
   echo ""
   return $RETVAL

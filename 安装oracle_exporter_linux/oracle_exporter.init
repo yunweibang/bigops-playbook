@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#	/etc/rc.d/init.d/kafka_exporter
+#	/etc/rc.d/init.d/oracle_exporter
 #
 # chkconfig: 2345 80 80
 #
@@ -10,9 +10,9 @@
 
 
 RETVAL=0
-PROG="kafka_exporter"
+PROG="oracle_exporter"
 
-DAEMON=/opt/exporter/kafka_exporter
+DAEMON=/opt/exporter/oracle_exporter
 PID_FILE=/var/run/${PROG}.pid
 LOCK_FILE=/var/lock/subsys/${PROG}
 
@@ -20,21 +20,22 @@ DAEMON_USER="root"
 
 start() {
   if check_status > /dev/null; then
-    echo "kafka_exporter is already running"
+    echo "oracle_exporter is already running"
     exit 0
   fi
  
-  echo -n $"Starting kafka_exporter: "
-  daemonize -u ${DAEMON_USER} -p ${PID_FILE} -l ${LOCK_FILE} ${DAEMON} --kafka.server=kafka_ip:kafka_port --web.listen-address=":9308"
+  echo -n $"Starting oracle_exporter: "
+  DATA_SOURCE_NAME=oracle_user/oracle_pass@//oracle_host:oracle_port/oracle_service
+  daemonize -u ${DAEMON_USER} -p ${PID_FILE} -l ${LOCK_FILE} ${DAEMON} --log.level error --web.listen-address 0.0.0.0:9161
   RETVAL=$?
   echo ""
   return $RETVAL
 }
  
 stop() {
-    echo -n $"Stopping kafka_exporter: "
+    echo -n $"Stopping oracle_exporter: "
     #killproc -p ${PID_FILE} -d 10 ${DAEMON}
-    /usr/bin/killall kafka_exporter
+    /usr/bin/killall oracle_exporter
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && rm -f ${LOCK_FILE} ${PID_FILE}

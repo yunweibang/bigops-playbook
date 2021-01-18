@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#	/etc/rc.d/init.d/kafka_exporter
+#	/etc/rc.d/init.d/elasticsearch_exporter
 #
 # chkconfig: 2345 80 80
 #
@@ -10,9 +10,9 @@
 
 
 RETVAL=0
-PROG="kafka_exporter"
+PROG="elasticsearch_exporter"
 
-DAEMON=/opt/exporter/kafka_exporter
+DAEMON=/opt/exporter/elasticsearch_exporter
 PID_FILE=/var/run/${PROG}.pid
 LOCK_FILE=/var/lock/subsys/${PROG}
 
@@ -20,21 +20,20 @@ DAEMON_USER="root"
 
 start() {
   if check_status > /dev/null; then
-    echo "kafka_exporter is already running"
+    echo "elasticsearch_exporter is already running"
     exit 0
   fi
  
-  echo -n $"Starting kafka_exporter: "
-  daemonize -u ${DAEMON_USER} -p ${PID_FILE} -l ${LOCK_FILE} ${DAEMON} --kafka.server=kafka_ip:kafka_port --web.listen-address=":9308"
+  echo -n $"Starting elasticsearch_exporter: "
+  daemonize -u ${DAEMON_USER} -p ${PID_FILE} -l ${LOCK_FILE} ${DAEMON} --es.all --es.indices --es.cluster_settings --es.indices_settings --es.shards --es.snapshots --es.timeout=10s --web.listen-address ":9114" --web.telemetry-path "/metrics" --es.uri http://es_user:es_pass@@es_ip:es_port
   RETVAL=$?
   echo ""
   return $RETVAL
 }
  
 stop() {
-    echo -n $"Stopping kafka_exporter: "
-    #killproc -p ${PID_FILE} -d 10 ${DAEMON}
-    /usr/bin/killall kafka_exporter
+    echo -n $"Stopping elasticsearch_exporter: "
+    /usr/bin/killall elasticsearch_exporter
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && rm -f ${LOCK_FILE} ${PID_FILE}
