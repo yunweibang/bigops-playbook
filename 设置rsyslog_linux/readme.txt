@@ -3,14 +3,14 @@
 设置rsyslog_linux
 
 
-变量内容
+变量内容：
 logstash_ip=""
 logstash_port="6514"
 facility='*'
 priority="notice"
 
 
-剧本内容
+剧本内容：
 ---
 - hosts: all
   gather_facts: no

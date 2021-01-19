@@ -7,11 +7,6 @@ if [ `arch` != "x86_64" ];then
     exit
 fi
 
-#awk里的$前必须加转义
-if [ ! -z "$(ps aux|grep '/opt/exporter/redis_exporter'|grep -v grep)" ];then
-    ps aux|grep '/opt/exporter/redis_exporter'|grep -v grep|awk '{print \$2}'|xargs sudo kill -9 >/dev/null 2>&1
-fi
-
 cd /opt/exporter/
 tar zxvf redis_exporter-v1.15.0.linux-amd64.tar.gz
 cp -f redis_exporter-v1.15.0.linux-amd64/redis_exporter /opt/exporter/
@@ -33,14 +28,14 @@ if ! hash systemctl 2>/dev/null;then
     sudo cp -f /opt/exporter/redis_exporter.init /etc/init.d/redis_exporter
     sudo chmod 777 /etc/init.d/redis_exporter
     sudo chkconfig redis_exporter on
-    sudo service redis_exporter start
+    sudo service redis_exporter restart
 fi
 
 if hash systemctl 2>/dev/null;then 
     sudo cp -f /opt/exporter/redis_exporter.service /usr/lib/systemd/system/
     sudo systemctl daemon-reload
     sudo systemctl enable redis_exporter
-    sudo systemctl start redis_exporter
+    sudo systemctl restart redis_exporter
 fi
 
 

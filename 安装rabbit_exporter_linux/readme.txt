@@ -40,7 +40,7 @@ RABBIT_URL="http://localhost:15672"
         - "{{ job_path }}/*"
 
     - name: 安装    
-      shell: /bin/bash /opt/exporter/rabbitmq_exporter.sh {{ RABBIT_USER }} {{ RABBIT_PASSWORD }} {{ OUTPUT_FORMAT }} {{ PUBLISH_PORT }} {{ RABBIT_URL }}
+      shell: /bin/bash /opt/exporter/rabbitmq_exporter.sh "{{ RABBIT_USER }}" "{{ RABBIT_PASSWORD }}" "{{ OUTPUT_FORMAT }}" "{{ PUBLISH_PORT }}" "{{ RABBIT_URL }}"
 
   
 

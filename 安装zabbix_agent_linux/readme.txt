@@ -3,7 +3,7 @@
 安装zabbix_agent_linux
 
 
-官网地址：
+官网：
 https://www.zabbix.com/cn/download
 
 

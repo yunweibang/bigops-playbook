@@ -40,5 +40,5 @@ cnf="3306.cnf"
         - "{{ job_path }}/*"
 
     - name: 安装    
-      shell: /bin/bash /opt/exporter/mysqld_exporter.sh {{ host }} {{ user }} {{ password }} {{ cnf }}
+      shell: /bin/bash /opt/exporter/mysqld_exporter.sh "{{ host }}" "{{ user }}" "{{ password }}" "{{ cnf }}"
 

@@ -1,21 +1,25 @@
+
 作业名称：
 安装winlogbeat_windows
 
-剧本附件
+
+官网：
+https://www.elastic.co/cn/downloads/beats/winlogbeat
+
+
+剧本附件：
 1：winlogbeat-7.6.1-windows-x86.zip
 2：winlogbeat.yml
 
-winlogbeat官网下载地址，供参考：
-https://www.elastic.co/cn/downloads/beats/winlogbeat
 
-变量内容
+模板变量：
 dest_path="c:/Program Files (x86)/"
 unarchive_file="winlogbeat-7.6.1-windows-x86.zip"
 unzip_dir="winlogbeat-7.6.1-windows-x86"
 conf_file="winlogbeat.yml"
 logstash_server="xxx.xxx.xxx.xxx:6515"
 
-剧本内容
+剧本内容：
 ---
 - hosts: all
   gather_facts: no

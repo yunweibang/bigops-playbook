@@ -25,7 +25,7 @@ kafka_port="9092"
         - "{{ job_path }}/*"
     
     - name: 安装    
-      shell: /bin/bash /opt/exporter/kafka_exporter.sh {{ kafka_ip }} {{ kafka_port }}
+      shell: /bin/bash /opt/exporter/kafka_exporter.sh "{{ kafka_ip }}" "{{ kafka_port }}"
  
       
 

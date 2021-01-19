@@ -1,24 +1,23 @@
+
 作业名称：
 安装wmi_exporter_windows
 
-系统类型：
-Windows
 
-
-剧本附件
-1：wmi_exporter-0.11.0-386.exe
-2：syskey.ps1、userkey.ps1
-
-wmi_exporter官网下载地址，供参考：
+官网：
 https://github.com/martinlindhe/wmi_exporter/releases
 
 
-变量内容
+剧本附件：
+1：wmi_exporter-0.11.0-386.exe
+2：syskey.ps1、userkey.ps1
+
+
+模板变量：
 dest_path="c:/Program Files (x86)/wmi_exporter/"
 exe_file="wmi_exporter-0.11.0-386.exe"
 
 
-剧本内容
+剧本内容：
 ---
 - name: example
   hosts: all

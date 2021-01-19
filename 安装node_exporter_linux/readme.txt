@@ -14,6 +14,10 @@ https://github.com/prometheus/node_exporter/
 4：node_exporter.sh
 5：syskey.sh
 6：userkey.sh
+7：lsb_release
+8：mpstat
+9：MegaCli
+
 
 
 剧本内容：

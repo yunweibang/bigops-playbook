@@ -40,7 +40,7 @@ SERVICE_NAME=""
         - "{{ job_path }}/*"
 
     - name: 安装    
-      shell: /bin/bash /opt/exporter/oracle_exporter.sh {{ USER }} {{ PASS }} {{ HOST }} {{ PORT }} {{ SERVICE_NAME }}
+      shell: /bin/bash /opt/exporter/oracle_exporter.sh "{{ USER }}" "{{ PASS }}" "{{ HOST }}" "{{ PORT }}" "{{ SERVICE_NAME }}"
 
   
 

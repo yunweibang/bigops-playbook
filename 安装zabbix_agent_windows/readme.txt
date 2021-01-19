@@ -1,18 +1,20 @@
+
 作业名称：
 安装zabbix_agent_windows
 注意：作业名称必须带关键字zabbix_agent，才能在zabbix-agent管理的安装下拉中显示
 
-剧本附件
+
+官网：
+https://www.zabbix.com/download
+
+
+剧本附件：
 1：zabbix_agent-4.4.6-windows-i386.zip
 2：zabbix_agentd.conf
 备注：解压zabbix_agent-4.4.6-windows-i386.zip文件，提取conf目录下的zabbix_agentd.conf，可以自定义配置模板
 
 
-zabbix_agent-4.4.6-windows官网下载地址，供参考：
-https://www.zabbix.com/download
-
-
-变量内容
+模板变量：
 dest_path="c:/Program Files (x86)/"
 unarchive_file="zabbix_agent-4.4.6-windows-i386.zip"
 unzip_dir="zabbix_agent-4.4.6-windows-i386"
@@ -20,7 +22,7 @@ Server="172.31.173.22"
 ServerActive="172.31.173.22"
 
 
-剧本内容
+剧本内容：
 ---
 - hosts: all
   gather_facts: no

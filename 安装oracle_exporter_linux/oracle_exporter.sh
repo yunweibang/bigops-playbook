@@ -7,11 +7,6 @@ if [ `arch` != "x86_64" ];then
     exit
 fi
 
-#awk里的$前必须加转义
-if [ ! -z "$(ps aux|grep '/opt/exporter/oracle_exporter'|grep -v grep)" ];then
-    ps aux|grep '/opt/exporter/oracle_exporter'|grep -v grep|awk '{print \$2}'|xargs sudo kill -9 >/dev/null 2>&1
-fi
-
 cd /opt/exporter/
 tar zxvf oracle_exporter-1.0.0-RC7.linux-amd64.tar.gz
 cp -f oracle_exporter-1.0.0-RC7.linux-amd64/oracle_exporter /opt/exporter/
@@ -33,12 +28,12 @@ if ! hash systemctl 2>/dev/null;then
     sudo mv -f /opt/exporter/oracle_exporter.init /etc/init.d/oracle_exporter
     sudo chmod 777 /etc/init.d/oracle_exporter
     sudo chkconfig oracle_exporter on
-    sudo service oracle_exporter start
+    sudo service oracle_exporter restart
 fi
 
 if hash systemctl 2>/dev/null;then 
     sudo mv -f /opt/exporter/oracle_exporter.service /usr/lib/systemd/system/
     sudo systemctl daemon-reload
     sudo systemctl enable oracle_exporter
-    sudo systemctl start oracle_exporter
+    sudo systemctl restart oracle_exporter
 fi

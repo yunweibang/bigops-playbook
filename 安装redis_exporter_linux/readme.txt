@@ -31,7 +31,7 @@ redis_pass=""
         - "{{ job_path }}/*"
     
     - name: 安装    
-      shell: /bin/bash /opt/exporter/redis_exporter.sh {{ redis_addr }} {{ redis_pass }}
+      shell: /bin/bash /opt/exporter/redis_exporter.sh "{{ redis_addr }}" "{{ redis_pass }}"
  
       
 

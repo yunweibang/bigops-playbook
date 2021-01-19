@@ -2,7 +2,7 @@
 作业名称：重启node_exporter_linux
 
 
-剧本内容
+剧本内容：
 ---
 - hosts: all
   gather_facts: no

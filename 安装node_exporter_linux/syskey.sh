@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH=/opt/bigops/bigagent/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/root/bin
+export PATH=/opt/bigops/bigagent/bin:/opt/exporter:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/root/bin
 export CURL="curl -s --connect-timeout 3 -m 10 -X POST"
 
 memtotal=$(free -m | grep Mem | awk '{print $2}')

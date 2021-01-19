@@ -33,7 +33,7 @@ es_port="9200"
         - "{{ job_path }}/*"
     
     - name: 安装    
-      shell: /bin/bash /opt/exporter/elasticsearch_exporter.sh {{ es_user }} {{ es_pass }} {{ es_ip }} {{ es_port }}
+      shell: /bin/bash /opt/exporter/elasticsearch_exporter.sh "{{ es_user }}" "{{ es_pass }}" "{{ es_ip }}" "{{ es_port }}"
  
       
 

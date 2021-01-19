@@ -7,11 +7,6 @@ if [ `arch` != "x86_64" ];then
     exit
 fi
 
-#awk里的$前必须加转义
-if [ ! -z "$(ps aux|grep '/opt/exporter/elasticsearch_exporter'|grep -v grep)" ];then
-    ps aux|grep '/opt/exporter/elasticsearch_exporter'|grep -v grep|awk '{print \$2}'|xargs sudo kill -9 >/dev/null 2>&1
-fi
-
 cd /opt/exporter/
 tar zxvf elasticsearch_exporter-1.1.0.linux-amd64.tar.gz
 cp -f elasticsearch_exporter-1.1.0.linux-amd64/elasticsearch_exporter /opt/exporter/
@@ -30,13 +25,13 @@ if ! hash systemctl 2>/dev/null;then
     sudo cp -f /opt/exporter/elasticsearch_exporter.init /etc/init.d/elasticsearch_exporter
     sudo chmod 777 /etc/init.d/elasticsearch_exporter
     sudo chkconfig elasticsearch_exporter on
-    sudo service elasticsearch_exporter start
+    sudo service elasticsearch_exporter restart
 fi
 
 if hash systemctl 2>/dev/null;then 
     sudo cp -f /opt/exporter/elasticsearch_exporter.service /usr/lib/systemd/system/
     sudo systemctl daemon-reload
     sudo systemctl enable elasticsearch_exporter
-    sudo systemctl start elasticsearch_exporter
+    sudo systemctl restart elasticsearch_exporter
 fi
 
