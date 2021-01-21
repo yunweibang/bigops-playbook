@@ -3,6 +3,8 @@
 export PATH=/opt/bigops/bigagent/bin:/opt/exporter:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/root/bin
 export CURL="curl -s --connect-timeout 3 -m 10 -X POST"
 
+alias cp=cp
+
 memtotal=$(free -m | grep Mem | awk '{print $2}')
 memavailable=$(free -m | grep Mem | awk '{print $7}')
 echo ${memavailable} ${memtotal} | awk '{print "mem_usage "100 - ($1/$2 * 100.0)}' >/opt/exporter/key/syskey.prom.tmp
@@ -18,7 +20,7 @@ if [ ! -z "${UDP_PORT}" ];then
     echo "${UDP_PORT}"|awk '{print "udp_port_status{port=\""$1"\"} 1" }' >>/opt/exporter/key/syskey.prom.tmp
 fi
 
-PROCS=$(ps -eo "%c"|awk -F/ '{print $1}'|grep -Ev '(grep|COMMAND)' |sort|uniq)
+PROCS=$(/usr/bin/ps -eo "%c"|awk -F/ '{print $1}'|grep -Ev '(grep|COMMAND)' |sort|uniq)
 
 if [ ! -z "${PROCS}" ];then
     echo "${PROCS}"|awk '{print "proc_status{name=\""$1"\"} 1" }' >>/opt/exporter/key/syskey.prom.tmp
@@ -32,17 +34,18 @@ grep -v 'dm-' /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_writebytes{dev
 grep -v 'dm-' /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_readiops{device=\"/dev/"$3"\"}",$4}' >>/opt/exporter/key/syskey.prom.tmp
 grep -v 'dm-' /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_writeiops{device=\"/dev/"$3"\"}",$8}' >>/opt/exporter/key/syskey.prom.tmp
 
-df -k|grep mapper|awk '{print $1}'|while read i
-do
-	if [ ! -z "$(echo "$i")" ];then
-	    DM=$(sudo lvdisplay "$i"|grep 'Block device'|awk -F: '{print "dm-"$NF}')
-	    grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_readbytes{device=\""dev"\"}",$6*512}' >>/opt/exporter/key/syskey.prom.tmp
-		grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_writebytes{device=\""dev"\"}",$10*512}' >>/opt/exporter/key/syskey.prom.tmp 
-		grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_readiops{device=\""dev"\"}",$4}' >>/opt/exporter/key/syskey.prom.tmp 
-		grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_writeiops{device=\""dev"\"}",$8}' >>/opt/exporter/key/syskey.prom.tmp
-	fi
-done
-
+if hash lvdisplay 2>/dev/null; then
+	df -k|grep mapper|awk '{print $1}'|while read i
+	do
+		if [ ! -z "$(echo "$i")" ];then
+		    DM=$(timeout 5 sudo lvdisplay "$i"|grep 'Block device'|awk -F: '{print "dm-"$NF}')
+		    grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_readbytes{device=\""dev"\"}",$6*512}' >>/opt/exporter/key/syskey.prom.tmp
+			grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_writebytes{device=\""dev"\"}",$10*512}' >>/opt/exporter/key/syskey.prom.tmp 
+			grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_readiops{device=\""dev"\"}",$4}' >>/opt/exporter/key/syskey.prom.tmp 
+			grep "$DM" /proc/diskstats|awk -v dev="$i" '{if($3 ~ /[0-9]$/) print "disk_writeiops{device=\""dev"\"}",$8}' >>/opt/exporter/key/syskey.prom.tmp
+		fi
+	done
+fi
 
 logical_cpu_total=$(cat /proc/cpuinfo| grep "processor"|wc -l)
 logined_users_total=$(who |wc -l)
@@ -64,14 +67,25 @@ else
 	ss -s|awk '/estab/{print $2,$4,$10,$12}'|sed 's/[,/()]/ /g'|awk '{print "tcp_total "$1"\ntcp_estab "$2"\ntcp_synrecv "$3"\ntcp_timewait "$4}' >>/opt/exporter/key/syskey.prom.tmp
 fi
 
-top -bn 1|grep -i tasks|awk '{print "proc_total "$2"\nproc_running "$4"\nproc_sleeping "$6"\nproc_zombie "$(NF-1)}' >>/opt/exporter/key/syskey.prom.tmp
+#/usr/bin/top -bn 1|grep -i tasks|awk '{print "proc_total "$2"\nproc_running "$4"\nproc_sleeping "$6"\nproc_zombie "$(NF-1)}' >>/opt/exporter/key/syskey.prom.tmp
 
-cpu_usage=$(mpstat -P ALL 1 15|awk '$1 ~ /:$/ && $2 ~ /all/ {print 100-$NF}')
+PS_PROC="$(/usr/bin/ps -A -ostat,ppid,pid,cmd)"
+proc_total=$(echo "${PS_PROC}"|wc -l)
+proc_running=$(echo "${PS_PROC}"| grep -E '^[R]'|wc -l)
+proc_sleeping=$(echo "${PS_PROC}"| grep -E '^[S]'|wc -l)
+proc_zombie=$(echo "${PS_PROC}"| grep -E '^[Zz]'|wc -l)
+
+echo "proc_total ${proc_total}" >>/opt/exporter/key/syskey.prom.tmp
+echo "proc_running ${proc_running}" >>/opt/exporter/key/syskey.prom.tmp
+echo "proc_sleeping ${proc_sleeping}" >>/opt/exporter/key/syskey.prom.tmp
+echo "proc_zombie ${proc_zombie}" >>/opt/exporter/key/syskey.prom.tmp
+
+cpu_usage=$(mpstat -P ALL 1 5|awk '$1 ~ /:$/ && $2 ~ /all/ {print 100-$NF}')
 echo "cpu_usage ${cpu_usage}" >>/opt/exporter/key/syskey.prom.tmp
 
-megaraid_predictive_failure=$(MegaCli -PDList -aALL -NoLog |grep -E '^Predictive Failure'|awk '{print $NF}'|sort -r|head -n 1)
-echo "megaraid_predictive_failure ${megaraid_predictive_failure}" >>/opt/exporter/key/syskey.prom.tmp
+# megaraid_predictive_failure=$(MegaCli64 -PDList -aALL -NoLog |grep -E '^Predictive Failure'|awk '{print $NF}'|sort -r|head -n 1)
+# echo "megaraid_predictive_failure ${megaraid_predictive_failure}" >>/opt/exporter/key/syskey.prom.tmp
 
-awk '{if($2 ~ /^[0-9]/ && $3 == "") print}' /opt/exporter/key/syskey.prom.tmp|sort|uniq >/opt/exporter/key/syskey.prom
+awk '{if($2 ~ /^[0-9]/ && $3 == "") print}' /opt/exporter/key/syskey.prom.tmp|sort|uniq >/opt/exporter/key/syskey.prom.tmp2
 
-
+cp -f /opt/exporter/key/syskey.prom.tmp2 /opt/exporter/key/syskey.prom
