@@ -20,7 +20,7 @@ if [ ! -z "${UDP_PORT}" ];then
     echo "${UDP_PORT}"|awk '{print "udp_port_status{port=\""$1"\"} 1" }' >>/opt/exporter/key/syskey.prom.tmp
 fi
 
-PROCS=$(/usr/bin/ps -eo "%c"|awk -F/ '{print $1}'|grep -Ev '(grep|COMMAND)' |sort|uniq)
+PROCS=$(ps -eo "%c"|awk -F/ '{print $1}'|grep -Ev '(grep|COMMAND)' |sort|uniq)
 
 if [ ! -z "${PROCS}" ];then
     echo "${PROCS}"|awk '{print "proc_status{name=\""$1"\"} 1" }' >>/opt/exporter/key/syskey.prom.tmp
@@ -69,11 +69,11 @@ fi
 
 #/usr/bin/top -bn 1|grep -i tasks|awk '{print "proc_total "$2"\nproc_running "$4"\nproc_sleeping "$6"\nproc_zombie "$(NF-1)}' >>/opt/exporter/key/syskey.prom.tmp
 
-PS_PROC="$(/usr/bin/ps -A -ostat,ppid,pid,cmd)"
-proc_total=$(echo "${PS_PROC}"|wc -l)
-proc_running=$(echo "${PS_PROC}"| grep -E '^[R]'|wc -l)
-proc_sleeping=$(echo "${PS_PROC}"| grep -E '^[S]'|wc -l)
-proc_zombie=$(echo "${PS_PROC}"| grep -E '^[Zz]'|wc -l)
+PS_PROC="$(ps -A -ostat,ppid,pid,cmd)"
+proc_total="$(echo "${PS_PROC}"|wc -l)
+proc_running="$(echo "${PS_PROC}"| grep -E '^[R]'|wc -l)"
+proc_sleeping="$(echo "${PS_PROC}"| grep -E '^[S]'|wc -l)"
+proc_zombie="$(echo "${PS_PROC}"| grep -E '^[Zz]'|wc -l)"
 
 echo "proc_total ${proc_total}" >>/opt/exporter/key/syskey.prom.tmp
 echo "proc_running ${proc_running}" >>/opt/exporter/key/syskey.prom.tmp

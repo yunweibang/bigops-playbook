@@ -1,0 +1,13 @@
+[Unit]
+Description=bigproxy
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/opt/bigops/bigproxy/start.sh
+ExecStop=/opt/bigops/bigproxy/stop.sh
+PrivateTmp=true
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
