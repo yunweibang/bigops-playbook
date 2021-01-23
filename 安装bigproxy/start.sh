@@ -13,7 +13,25 @@ else
     exit
 fi
 
+if [ ! -f /opt/bigops/bigproxy/config/bigproxy.properties ];then
+    echo "没发现/opt/bigops/bigproxy/config/bigproxy.properties，退出!"
+    exit
+fi
+
+if [ ! -f /opt/bigops/bigproxy/config/whitelist ];then
+    echo "没发现/opt/bigops/bigproxy/config/whitelist，退出!"
+    exit
+fi
+
+if [ ! -d /opt/bigops/bigproxy/temp ];then
+    mkdir -p /opt/bigops/bigproxy/temp
+fi
+
+if [ ! -d /opt/bigops/bigproxy/hostmon_temp ];then
+    mkdir -p /opt/bigops/bigproxy/hostmon_temp
+fi
+
 cd /opt/bigops/bigproxy/
 
-java -jar -Duser.timezone=GMT+08 -Djava.net.preferIPv4Stack=true -Xms2G -Xmx2G /opt/bigops/bigproxy/bigproxy.jar >/dev/null 2>&1 &
+java -jar -Duser.timezone=GMT+08 -Djava.net.preferIPv4Stack=true -Xms4G -Xmx4G /opt/bigops/bigproxy/bigproxy.jar >/dev/null 2>&1 &
 

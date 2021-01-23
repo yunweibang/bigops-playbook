@@ -13,7 +13,7 @@
 7：bigproxy.service
 
 
-剧本内容
+安装剧本内容
 ---
 - hosts: all
   gather_facts: no
@@ -28,10 +28,19 @@
         - "{{ job_path }}/*"
       
     - name: 运行安装脚本
-      shell: /bin/bash /opt/bigops/bigproxy/install.sh
+      #第一个参数设置是否记录日志on/off，第二个参数设置Xms和Xmx的大小
+      shell: /bin/bash /opt/bigops/bigproxy/install.sh "off" "4G"
+
+    - name: 检查bigproxy进程
+      shell: ps -ef|grep bigproxy|grep -v grep
+      register: bigproxy_proc
+
+    - name: 显示进程
+      debug: 
+        msg: "{{ bigproxy_proc['stdout_lines'] }}"
 
 
-卸载bigproxy
+卸载剧本内容
 ---
 - hosts: all
   gather_facts: no

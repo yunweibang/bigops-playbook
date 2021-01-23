@@ -15,7 +15,7 @@ export CUR_SEC=$(date -d @${EXEC_TIME} "+%M"|sed -r 's/0*([0-9])/\1/')
 
 export LLD_ALL_METRICS="${TEMP_DIR}/${HOST_ID}_lld_all_metrics"
 export ALL_METRICS="${TEMP_DIR}/${HOST_ID}_all_metrics"
-export CURL="timeout 10 curl -s -X POST"
+export CURL="timeout 5 curl -s -X POST"
 export SEND="${CURL}"" ${PROXY}/agent/mon/host"
 export LLD_SEND="${CURL}"" ${PROXY}/agent/discovery/host"
 export LLD_UPDATE="${CURL}"" ${PROXY}/agent/discovery/updatenetif"
@@ -39,143 +39,25 @@ echo "/bin/bash /opt/bigops/bigproxy/hostmon.sh" \'"$1"\'
 
 echo "EXEC_TIME：$(date -d @${EXEC_TIME} "+%Y-%m-%d %H:%M:%S")"
 
-#获取Ansbile连接信息
-export ANSIBLE_HOSTS="${TEMP_DIR}/${HOST_ID}_host"
-export ANSIBLE_CMD="timeout 10 ansible -i ${ANSIBLE_HOSTS} all"
-
-if [ ! -s "${ANSIBLE_HOSTS}" ];then
-  echo "没有发现ansible hosts文件：${ANSIBLE_HOSTS}"
-else
-  echo -e "\n--------Anbile命令--------"
-  echo "ANSIBLE_CMD=\"timeout 10 ansible -i ${ANSIBLE_HOSTS} all\""
-fi
-
-#--------获取SNMP连接信息--------
-SNMP_INFO="$(${CURL} ${PROXY}/agent/hostsnmp -d "id=${HOST_ID}&ak=${HOST_AK}")"
-snmp_proto=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $1}')
-snmp_ip=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $2}')
-snmp_port=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $3}')
-snmp_community=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $4}')
-snmp_user=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $4}')
-snmp_security_level=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $5}')
-snmp_auth_protocol=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $6}')
-snmp_auth_pass=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $7}')
-snmp_privacy_protocol=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $8}')
-snmp_privacy_pass=$(echo ${HOST_SNMP}|awk -F'[|][|]' '{print $9}')
-
-if [ "${snmp_proto}" == 'snmpv1' ];then
-    export SNMP_CMD="timeout 10 snmpwalk -v 1 -c ""${snmp_community}"" ""${CLIENT_IP}"
-fi
-
-if [ "${snmp_proto}" == 'snmpv2' ];then
-    export SNMP_CMD="timeout 10 snmpwalk -v 2c -c ""${snmp_community}"" ""${CLIENT_IP}"
-fi
-
-if [ "${snmp_proto}" == 'snmpv3' ];then
-    if [ "${snmp_security_level}" == 'noAuthNoPriv' ];then
-        export SNMP_CMD="timeout 10 snmpwalk -v 3 -l noAuthNoPriv -u ""${snmp_user}"" ""${CLIENT_IP}"
-    fi  
-    if [ "${snmp_security_level}" == 'authNoPriv' ];then
-        export SNMP_CMD="timeout 10 snmpwalk -v 3 -l authNoPriv -u ""${snmp_user}"" -A ""${snmp_auth_protocol}"" -a '""${snmp_auth_pass}""' ""${CLIENT_IP}"
-    fi  
-    if [ "${snmp_security_level}" == 'authPriv' ];then
-        export SNMP_CMD="timeout 10 snmpwalk -v 3 -l authPriv -u ""${snmp_user}"" -A ""${snmp_auth_protocol}"" -a '""${snmp_auth_pass}""' -X ""${snmp_privacy_protocol}"" -x '""${snmp_privacy_pass}"" ""${CLIENT_IP}"
-    fi    
-fi
-
-if [ ! -z "$(echo "${SNMP_INFO}"|grep -v 'Incorrect')" ];then
-  echo -e "\n--------SNMP命令--------"
-  echo "${SNMP_CMD}"
-else
-  echo "SNMP命令信息不全"
-  echo "${CURL} ${PROXY}/agent/hostsnmp -d \"id=${HOST_ID}&ak=${HOST_AK}\""
-fi
-
-#获取IPMI连接信息
-#第一列IPMI IP、第二列IPMI用户、第三列IPMI密码。
-IPMI_INFO="$(${CURL} ${PROXY}/agent/hostipmi -d "id=${HOST_ID}&ak=${HOST_AK}")"
-IPMI_HOST=$(echo "${SNMP_INFO}"|awk -F'[|][|]' '{print $1}')
-IPMI_USER=$(echo "${SNMP_INFO}"|awk -F'[|][|]' '{print $2}')
-IPMI_PASS=$(echo "${SNMP_INFO}"|awk -F'[|][|]' '{print $3}')
-
-if [[ ! -z "${ipmi_ip}" ]] && [[ ! -z "${ipmi_user}" ]] && [[ ! -z "${ipmi_pass}" ]];then
-  echo -e "\n\n--------IPMI命令--------"
-  echo "IPMI_CMD="timeout 10 ipmitool -I lan -H ${IPMI_HOST} -U ${IPMI_USER} -P ${IPMI_PASS}""
-  export IPMI_CMD="timeout 10 ipmitool -I lan -H ${IPMI_HOST} -U ${IPMI_USER} -P ${IPMI_PASS}"
-  echo -e "\n\n--------IPMI命令--------"
-  echo "${IPMI_CMD}"
-fi
-
-
-echo -e "\n--------低级发现--------"
-
-echo "${CURL} ${PROXY}/agent/template/host/lld -d \"id=${HOST_ID}&ak=${HOST_AK}\""
-LLD_LIST="$(${CURL} ${PROXY}/agent/template/host/lld -d "id=${HOST_ID}&ak=${HOST_AK}")"
-
-echo -e "\n${LLD_LIST}"
-echo -e "第一列发现方式、第二列发现Key、第三列发现间隔、第四列端点。\n"
-#发现方式：1Exporter、2Ansible、3SNMP、4IPMI
-#例子：2||linux_disk||1||http://192.168:9100/metrics
- 
-
-if [ ! -z "${LLD_LIST}" ];then
-  echo -e "--------循环处理LLD--------"
-  echo "${LLD_LIST}"|sort|uniq|while read lld_line
-  do
-    export LLD_MODE="$(echo "${lld_line}"|awk -F'[|][|]' '{print $1}')"
-    export LLD_KEY="$(echo "${lld_line}"|awk -F'[|][|]' '{print $2}')"
-    export LLD_INTERVAL="$(echo "${lld_line}"|awk -F'[|][|]' '{print $3}')"
-    export LLD_ENDPOINT="$(echo "${lld_line}"|awk -F'[|][|]' '{print $4}')"
-
-    #如果发现模式是exporter，获取endpoint内容
-    if [ ! -z "$(echo "${LLD_MODE}"|grep ^1)" ];then
-      echo -e "timeout 10 curl -q \"${LLD_ENDPOINT}\""
-      timeout 10 curl -q "${LLD_ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$' > "${LLD_ALL_METRICS}"
-      if [ $? -ne 0 ];then
-        echo "连接错误，请检查 curl -q ${LLD_ENDPOINT}"
-        continue
-      fi
-    fi
-
-    echo -e "\n--------下载Shell命令--------"
-    echo "${CURL} ${PROXY}/agent/template/host/lld/shell -d \"id=${HOST_ID}&ak=${HOST_AK}&id=${HOST_ID}&lld_key=${LLD_KEY}\""
-    ${CURL} ${PROXY}/agent/template/host/lld/shell -d "id=${HOST_ID}&ak=${HOST_AK}&id=${HOST_ID}&lld_key=${LLD_KEY}" >"${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh"
-
-    if [ $((${CUR_SEC} % ${LLD_INTERVAL})) -eq 0 ];then
-      echo -e "\n--------调试Shell信息--------"
-      echo "export ANSIBLE_CMD=\"${ANSIBLE_CMD}\""
-      echo "export SNMP_CMD=\"${SNMP_CMD}\""
-      echo "export IPMI_CMD=\"${IPMI_CMD}\""
-      echo "export LLD_SEND=\"${LLD_SEND}\""
-      echo "export LLD_UPDATE=\"${LLD_UPDATE}\""
-      echo "export ALL_METRICS=\"${ALL_METRICS}\""
-      echo "export HOST_ID=${HOST_ID}"
-      echo "export HOST_AK=${HOST_AK}"
-      echo "export SEND=\"${SEND}\""
-      echo "export LLD_KEY=${LLD_KEY}"
-      echo
-      cat ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh
-
-      #echo "执行Shell命令：timeout 10 /bin/bash ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh"
-      shell_result="$(timeout 10 /bin/bash ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh 2>&1)"
-      echo -e "\n\n--------执行Shell结果--------"
-      echo "${shell_result}"
-    fi
-  done
-fi
-
 
 echo -e "\n--------获取监控项列表--------"
 
 #echo "获取item"
-echo "{${CURL} ${PROXY}/agent/template/host -d \"id=${HOST_ID}&ak=${HOST_AK}\"}"
+echo "${CURL} ${PROXY}/agent/template/host -d \"id=${HOST_ID}&ak=${HOST_AK}\""
 
 ITEM="$(${CURL} ${PROXY}/agent/template/host -d "id=${HOST_ID}&ak=${HOST_AK}")"
 
 if [ $? -ne 0 ];then
   echo "curl超时"
+  sleep 2
   ITEM="$(${CURL} ${PROXY}/agent/template/host -d "id=${HOST_ID}&ak=${HOST_AK}")"
+  if [ $? -ne 0 ];then
+    echo "curl超时"
+    sleep 2
+    ITEM="$(${CURL} ${PROXY}/agent/template/host -d "id=${HOST_ID}&ak=${HOST_AK}")"
+  fi
 fi
+
 
 echo -e "\n第一列更新方式、第二列KEY、第三列间隔、第四列自动发现、第五列模板ID、第六列端点"
 #例子：1||mem_usage,cpu_usage||1||none||11||http://172.31.173.25:9100/metrics
@@ -291,6 +173,74 @@ if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|udpping_status')" ];then
 fi
 
 
+#获取Ansbile连接信息
+export ANSIBLE_HOSTS="${TEMP_DIR}/${HOST_ID}_host"
+export ANSIBLE_CMD="timeout 10 ansible -i ${ANSIBLE_HOSTS} all"
+
+if [ ! -s "${ANSIBLE_HOSTS}" ];then
+  echo "没有发现ansible hosts文件：${ANSIBLE_HOSTS}"
+else
+  echo -e "\n--------Anbile命令--------"
+  echo "ANSIBLE_CMD=\"timeout 10 ansible -i ${ANSIBLE_HOSTS} all\""
+fi
+
+#--------获取SNMP连接信息--------
+SNMP_INFO="$(${CURL} ${PROXY}/agent/hostsnmp -d "id=${HOST_ID}&ak=${HOST_AK}")"
+snmp_proto=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $1}')
+snmp_ip=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $2}')
+snmp_port=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $3}')
+snmp_community=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $4}')
+snmp_user=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $4}')
+snmp_security_level=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $5}')
+snmp_auth_protocol=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $6}')
+snmp_auth_pass=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $7}')
+snmp_privacy_protocol=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $8}')
+snmp_privacy_pass=$(echo ${HOST_SNMP}|awk -F'[|][|]' '{print $9}')
+
+if [ "${snmp_proto}" == 'snmpv1' ];then
+    export SNMP_CMD="timeout 10 snmpwalk -v 1 -c ""${snmp_community}"" ""${CLIENT_IP}"
+fi
+
+if [ "${snmp_proto}" == 'snmpv2' ];then
+    export SNMP_CMD="timeout 10 snmpwalk -v 2c -c ""${snmp_community}"" ""${CLIENT_IP}"
+fi
+
+if [ "${snmp_proto}" == 'snmpv3' ];then
+    if [ "${snmp_security_level}" == 'noAuthNoPriv' ];then
+        export SNMP_CMD="timeout 10 snmpwalk -v 3 -l noAuthNoPriv -u ""${snmp_user}"" ""${CLIENT_IP}"
+    fi  
+    if [ "${snmp_security_level}" == 'authNoPriv' ];then
+        export SNMP_CMD="timeout 10 snmpwalk -v 3 -l authNoPriv -u ""${snmp_user}"" -A ""${snmp_auth_protocol}"" -a '""${snmp_auth_pass}""' ""${CLIENT_IP}"
+    fi  
+    if [ "${snmp_security_level}" == 'authPriv' ];then
+        export SNMP_CMD="timeout 10 snmpwalk -v 3 -l authPriv -u ""${snmp_user}"" -A ""${snmp_auth_protocol}"" -a '""${snmp_auth_pass}""' -X ""${snmp_privacy_protocol}"" -x '""${snmp_privacy_pass}"" ""${CLIENT_IP}"
+    fi    
+fi
+
+if [ ! -z "$(echo "${SNMP_INFO}"|grep -v 'Incorrect')" ];then
+  echo -e "\n--------SNMP命令--------"
+  echo "${SNMP_CMD}"
+else
+  echo "SNMP命令信息不全"
+  echo "${CURL} ${PROXY}/agent/hostsnmp -d \"id=${HOST_ID}&ak=${HOST_AK}\""
+fi
+
+
+#第一列IPMI IP、第二列IPMI用户、第三列IPMI密码。
+echo -e "\n--------获取IPMI连接信息--------"
+IPMI_INFO="$(${CURL} ${PROXY}/agent/hostipmi/get -d "id=${HOST_ID}&ak=${HOST_AK}")"
+IPMI_HOST=$(echo "${SNMP_INFO}"|awk -F'[|][|]' '{print $1}')
+IPMI_USER=$(echo "${SNMP_INFO}"|awk -F'[|][|]' '{print $2}')
+IPMI_PASS=$(echo "${SNMP_INFO}"|awk -F'[|][|]' '{print $3}')
+
+if [[ ! -z "${ipmi_ip}" ]] && [[ ! -z "${ipmi_user}" ]] && [[ ! -z "${ipmi_pass}" ]];then
+  echo -e "\n\n--------IPMI命令--------"
+  echo "IPMI_CMD="timeout 10 ipmitool -I lan -H ${IPMI_HOST} -U ${IPMI_USER} -P ${IPMI_PASS}""
+  export IPMI_CMD="timeout 10 ipmitool -I lan -H ${IPMI_HOST} -U ${IPMI_USER} -P ${IPMI_PASS}"
+  echo -e "\n\n--------IPMI命令--------"
+  echo "${IPMI_CMD}"
+fi
+
 echo -e "\n\n--------处理主机监控项--------"
 
 echo "${ITEM}"|grep -E '^(1|2|3|4|9)\|\|'|while read item_line
@@ -374,6 +324,61 @@ do
   fi
 done
 
+echo -e "\n--------低级发现--------"
 
+echo "${CURL} ${PROXY}/agent/template/host/lld -d \"id=${HOST_ID}&ak=${HOST_AK}\""
+LLD_LIST="$(${CURL} ${PROXY}/agent/template/host/lld -d "id=${HOST_ID}&ak=${HOST_AK}")"
+
+echo -e "\n${LLD_LIST}"
+echo -e "第一列发现方式、第二列发现Key、第三列发现间隔、第四列端点。\n"
+#发现方式：1Exporter、2Ansible、3SNMP、4IPMI
+#例子：2||linux_disk||1||http://192.168:9100/metrics
+ 
+
+if [ ! -z "${LLD_LIST}" ];then
+  echo -e "--------循环处理LLD--------"
+  echo "${LLD_LIST}"|sort|uniq|while read lld_line
+  do
+    export LLD_MODE="$(echo "${lld_line}"|awk -F'[|][|]' '{print $1}')"
+    export LLD_KEY="$(echo "${lld_line}"|awk -F'[|][|]' '{print $2}')"
+    export LLD_INTERVAL="$(echo "${lld_line}"|awk -F'[|][|]' '{print $3}')"
+    export LLD_ENDPOINT="$(echo "${lld_line}"|awk -F'[|][|]' '{print $4}')"
+
+    #如果发现模式是exporter，获取endpoint内容
+    if [ ! -z "$(echo "${LLD_MODE}"|grep ^1)" ];then
+      echo -e "timeout 10 curl -q \"${LLD_ENDPOINT}\""
+      timeout 15 curl -q "${LLD_ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$' > "${LLD_ALL_METRICS}"
+      if [ $? -ne 0 ];then
+        echo "连接错误，请检查 curl -q ${LLD_ENDPOINT}"
+        continue
+      fi
+    fi
+
+    echo -e "\n--------下载Shell命令--------"
+    echo "${CURL} ${PROXY}/agent/template/host/lld/shell -d \"id=${HOST_ID}&ak=${HOST_AK}&id=${HOST_ID}&lld_key=${LLD_KEY}\""
+    ${CURL} ${PROXY}/agent/template/host/lld/shell -d "id=${HOST_ID}&ak=${HOST_AK}&id=${HOST_ID}&lld_key=${LLD_KEY}" >"${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh"
+
+    if [ $((${CUR_SEC} % ${LLD_INTERVAL})) -eq 0 ];then
+      echo -e "\n--------调试Shell信息--------"
+      echo "export ANSIBLE_CMD=\"${ANSIBLE_CMD}\""
+      echo "export SNMP_CMD=\"${SNMP_CMD}\""
+      echo "export IPMI_CMD=\"${IPMI_CMD}\""
+      echo "export LLD_SEND=\"${LLD_SEND}\""
+      echo "export LLD_UPDATE=\"${LLD_UPDATE}\""
+      echo "export ALL_METRICS=\"${ALL_METRICS}\""
+      echo "export HOST_ID=${HOST_ID}"
+      echo "export HOST_AK=${HOST_AK}"
+      echo "export SEND=\"${SEND}\""
+      echo "export LLD_KEY=${LLD_KEY}"
+      echo
+      cat ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh
+
+      #echo "执行Shell命令：timeout 10 /bin/bash ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh"
+      shell_result="$(timeout 10 /bin/bash ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh 2>&1)"
+      echo -e "\n\n--------执行Shell结果--------"
+      echo "${shell_result}"
+    fi
+  done
+fi
 
 
