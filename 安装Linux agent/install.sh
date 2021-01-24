@@ -15,7 +15,7 @@ if [ -f /opt/bigops/bigagent/bigagent.conf ];then
 fi
 
 cd /opt/bigops/
-rm -rf /opt/bigops/bigagent
+rm -rf bigagent
 tar zxvf bigagent.tar.gz
 
 if [ -f /opt/bigops/bigagent.conf ];then

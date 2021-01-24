@@ -22,20 +22,17 @@ bigagent run
       win_command: net stop bigagent
       ignore_errors: true
 
-    - name: 卸载bigagent服务
-      win_command: \"C:/Program Files/bigagent/bigagent.exe\" uninstall
-      ignore_errors: true
-
     - name: 上传文件到远程目录
-      win_copy: src='/opt/bigops/packages/Windows/bigagent.exe' dest='C:/Program Files/bigagent/bigagent.exe'
+      win_copy: src='/opt/bigops/job/3/bigagent.exe' dest='C:/Program Files/bigagent/bigagent.exe'
 
+    - name: 卸载bigagent服务
+      win_command: "\"C:/Program Files/bigagent/bigagent.exe\" uninstall"
+      ignore_errors: true
+      
     - name: 安装bigagent服务
-      win_command: \"C:/Program Files/bigagent/bigagent.exe\" install
+      win_command: "\"C:/Program Files/bigagent/bigagent.exe\" install"
 
     - name: 启动bigagent服务
-      win_command: net start bigagent
-
-    - name: 添加计划任务
       win_command: net start bigagent
 
 
@@ -47,6 +44,6 @@ bigagent run
 
   tasks:
     - name: 卸载bigagent服务
-      win_command: \"C:/Program Files/bigagent/bigagent.exe\" uninstall
+      win_command: "\"C:/Program Files/bigagent/bigagent.exe\" uninstall"
 
 

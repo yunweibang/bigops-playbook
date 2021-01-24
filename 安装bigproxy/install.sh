@@ -15,7 +15,6 @@ docker rmi bigproxy:latest >/dev/null 2>&1
 
 chmod +x /opt/bigops/bigproxy/*.sh /opt/bigops/bigproxy/*.jar
 
-
 if [ ! -d /opt/bigops/bigproxy/hostinfo_temp ];then
 	mkdir /opt/bigops/bigproxy/hostinfo_temp
 fi

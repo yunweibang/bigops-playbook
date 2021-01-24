@@ -70,7 +70,7 @@ fi
 #/usr/bin/top -bn 1|grep -i tasks|awk '{print "proc_total "$2"\nproc_running "$4"\nproc_sleeping "$6"\nproc_zombie "$(NF-1)}' >>/opt/exporter/key/syskey.prom.tmp
 
 PS_PROC="$(ps -A -ostat,ppid,pid,cmd)"
-proc_total="$(echo "${PS_PROC}"|wc -l)
+proc_total="$(echo "${PS_PROC}"|wc -l)"
 proc_running="$(echo "${PS_PROC}"| grep -E '^[R]'|wc -l)"
 proc_sleeping="$(echo "${PS_PROC}"| grep -E '^[S]'|wc -l)"
 proc_zombie="$(echo "${PS_PROC}"| grep -E '^[Zz]'|wc -l)"

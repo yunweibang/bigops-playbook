@@ -1,15 +1,12 @@
 #!/bin/bash
 
 
-javahome=$(ls -d /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*|grep -v debug|head -n 1)
-
-if [ ! -z "${javahome}" ];then
-    export JAVA_HOME=${javahome}
+if [ -d /opt/bigops/jre ];then
+    export JAVA_HOME=/opt/bigops/jre
     export PATH=$JAVA_HOME/bin:$PATH
     export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
-    sed -i 's#securerandom.source=.*#securerandom.source=file:/dev/./urandom#g' ${javahome}/jre/lib/security/java.security >/dev/null 2>&1
 else
-    echo "没发现JAVA_HOME，退出!"
+    echo "没发现/opt/bigops/jre目录，请下载运行初始化环境脚本，退出!"
     exit
 fi
 

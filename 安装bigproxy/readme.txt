@@ -28,8 +28,8 @@
         - "{{ job_path }}/*"
       
     - name: 运行安装脚本
-      #第一个参数设置是否记录日志on/off，第二个参数设置Xms和Xmx的大小
-      shell: /bin/bash /opt/bigops/bigproxy/install.sh "off" "4G"
+      #第一个参数设置日志级别ERROR/INFO，第二个参数设置Xms和Xmx的大小
+      shell: /bin/bash /opt/bigops/bigproxy/install.sh "ERROR" "4G"
 
     - name: 检查bigproxy进程
       shell: ps -ef|grep bigproxy|grep -v grep

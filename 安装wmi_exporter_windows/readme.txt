@@ -9,8 +9,7 @@ https://github.com/martinlindhe/wmi_exporter/releases
 
 剧本附件：
 1：wmi_exporter-0.11.0-386.exe
-2：syskey.ps1、userkey.ps1
-
+2：syskey.ps1
 
 模板变量：
 dest_path="c:/Program Files (x86)/wmi_exporter/"

@@ -4,11 +4,9 @@
 
 
 剧本附件：
-1：bigagent.sh
-2：hostinfo.sh
-3：install.sh
-4：soft_version.sh
-
+1：install.sh
+2：bigagent.tar.gz
+备注：bigagent目录不用上传
 
 剧本内容
 ---
@@ -32,5 +30,12 @@
 
 
 卸载bigagent
+---
+- hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: 删除定时任务    
+      cron: name='bigagent' state=absent
 
 
