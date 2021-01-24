@@ -1,13 +1,16 @@
 #!/bin/bash
 
 export PATH=/opt/bigops/bigagent/bin:/opt/exporter:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/root/bin
-export CURL="curl -s --connect-timeout 3 -m 10 -X POST"
 
 alias cp=cp
+alias mv=mv
 
 memtotal=$(free -m | grep Mem | awk '{print $2}')
 memavailable=$(free -m | grep Mem | awk '{print $7}')
 echo ${memavailable} ${memtotal} | awk '{print "mem_usage "100 - ($1/$2 * 100.0)}' >/opt/exporter/key/syskey.prom.tmp
+
+cpu_usage=$(mpstat -P ALL 1 10|awk '$1 ~ /^Average/ && $2 ~ /all/ {print 100-$NF}')
+echo "cpu_usage ${cpu_usage}" >>/opt/exporter/key/syskey.prom.tmp
 
 TCP_PORT=$(ss -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
 UDP_PORT=$(ss -nplu|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
@@ -20,7 +23,7 @@ if [ ! -z "${UDP_PORT}" ];then
     echo "${UDP_PORT}"|awk '{print "udp_port_status{port=\""$1"\"} 1" }' >>/opt/exporter/key/syskey.prom.tmp
 fi
 
-PROCS=$(ps -eo "%c"|awk -F/ '{print $1}'|grep -Ev '(grep|COMMAND)' |sort|uniq)
+PROCS=$(ps -eo "%c"|awk -F/ '{print $1}'|grep -Ev '(grep|COMMAND|scsi|xfs)'|sort|uniq)
 
 if [ ! -z "${PROCS}" ];then
     echo "${PROCS}"|awk '{print "proc_status{name=\""$1"\"} 1" }' >>/opt/exporter/key/syskey.prom.tmp
@@ -56,8 +59,8 @@ echo "logined_users_total ${logined_users_total}" >>/opt/exporter/key/syskey.pro
 #disk_total=$(df -m|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk 'BEGIN{sum=0}{if($2!~/anon/)sum+=$2}END{print sum}')
 #echo "${disk_used}" "${disk_total}"|awk '{print "disk_total_usage",$1/$2*100}' >>/opt/exporter/key/syskey.prom.tmp
 
-disk_fs_max_usage=$(df -k|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print $5}'|sed 's/%//g'|sort -r|head -n 1)
-disk_inode_max_usage=$(df -i|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|awk '{print $5}'|sed 's/%//g'|sort -r|head -n 1)
+disk_fs_max_usage=$(df -k|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|grep '%'|awk '{print $5}'|sed 's/%//g'|sort -r|head -n 1)
+disk_inode_max_usage=$(df -i|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|grep '%'|awk '{print $5}'|sed 's/%//g'|sort -r|head -n 1)
 echo "disk_fs_max_usage ${disk_fs_max_usage}" >>/opt/exporter/key/syskey.prom.tmp
 echo "disk_inode_max_usage ${disk_inode_max_usage}" >>/opt/exporter/key/syskey.prom.tmp
 
@@ -80,12 +83,9 @@ echo "proc_running ${proc_running}" >>/opt/exporter/key/syskey.prom.tmp
 echo "proc_sleeping ${proc_sleeping}" >>/opt/exporter/key/syskey.prom.tmp
 echo "proc_zombie ${proc_zombie}" >>/opt/exporter/key/syskey.prom.tmp
 
-cpu_usage=$(mpstat -P ALL 1 5|awk '$1 ~ /:$/ && $2 ~ /all/ {print 100-$NF}')
-echo "cpu_usage ${cpu_usage}" >>/opt/exporter/key/syskey.prom.tmp
-
 # megaraid_predictive_failure=$(MegaCli64 -PDList -aALL -NoLog |grep -E '^Predictive Failure'|awk '{print $NF}'|sort -r|head -n 1)
 # echo "megaraid_predictive_failure ${megaraid_predictive_failure}" >>/opt/exporter/key/syskey.prom.tmp
 
 awk '{if($2 ~ /^[0-9]/ && $3 == "") print}' /opt/exporter/key/syskey.prom.tmp|sort|uniq >/opt/exporter/key/syskey.prom.tmp2
 
-cp -f /opt/exporter/key/syskey.prom.tmp2 /opt/exporter/key/syskey.prom
+mv -f /opt/exporter/key/syskey.prom.tmp2 /opt/exporter/key/syskey.prom
