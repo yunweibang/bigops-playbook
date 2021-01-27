@@ -46,7 +46,8 @@ RABBIT_URL="http://localhost:15672"
 
   
 
-
+测试：
+curl http://IP:9419/metrics|grep rabbitmq_up
   
 
 

@@ -11,16 +11,16 @@ cd /opt/exporter/
 tar zxvf redis_exporter-v1.15.0.linux-amd64.tar.gz
 cp -f redis_exporter-v1.15.0.linux-amd64/redis_exporter /opt/exporter/
 
-如果redis密码为空
+#判断redis密码是否为空
 if [ ! -z "$2" ];then
-    sed -i "s#redis_addr#$1#g" /opt/exporter/redis_exporter.init
-    sed -i "s#reids_pass#$2#g" /opt/exporter/redis_exporter.service
-    sed -i "s#redis_addr#$1#g" /opt/exporter/redis_exporter.init
-    sed -i "s#reids_pass#$2#g" /opt/exporter/redis_exporter.service
+    sed -i "s#redis_addr#"$1"#g" /opt/exporter/redis_exporter.init
+    sed -i "s#reids_pass#"$2"#g" /opt/exporter/redis_exporter.init
+    sed -i "s#redis_addr#"$1"#g" /opt/exporter/redis_exporter.service
+    sed -i "s#reids_pass#"$2"#g" /opt/exporter/redis_exporter.service
 else
-    sed -i "s#redis_addr#$1#g" /opt/exporter/redis_exporter.init
-    sed -i "s#-redis.password reids_pass##g" /opt/exporter/redis_exporter.service
-    sed -i "s#redis_addr#$1#g" /opt/exporter/redis_exporter.init
+    sed -i "s#redis_addr#"$1"#g" /opt/exporter/redis_exporter.init
+    sed -i "s#-redis.password reids_pass##g" /opt/exporter/redis_exporter.init
+    sed -i "s#redis_addr#"$1"#g" /opt/exporter/redis_exporter.service
     sed -i "s#-redis.password reids_pass##g" /opt/exporter/redis_exporter.service
 fi
 

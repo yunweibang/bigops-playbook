@@ -35,7 +35,8 @@ redis_pass=""
  
       
 
-
+测试：
+curl http://ip:9121/metrics|grep redis_up
   
 
   

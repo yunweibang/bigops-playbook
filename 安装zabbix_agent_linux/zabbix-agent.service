@@ -1,18 +1,13 @@
-[Unit]
-Description=Zabbix Agent
-After=syslog.target
-After=network.target
-
 [Service]
-Environment="CONFFILE=/etc/zabbix/zabbix_agentd.conf"
-EnvironmentFile=-/etc/sysconfig/zabbix-agent
-Type=forking
-Restart=on-failure
-PIDFile=/run/zabbix/zabbix_agentd.pid
-KillMode=control-group
-ExecStart=/usr/sbin/zabbix_agentd -c $CONFFILE
-ExecStop=/bin/kill -SIGTERM $MAINPID
-RestartSec=10s
+User=root
+Group=root
+ExecStart=/usr/sbin/zabbix_agentd -c /etc/zabbix/zabbix_agentd.conf 
+ExecStop=ps aux|grep /usr/sbin/zabbix_agentd|grep -v grep|awk '{print $2}'|xargs kill -9
 
 [Install]
 WantedBy=multi-user.target
+
+[Unit]
+Description=node_exporter
+After=network.target 
+

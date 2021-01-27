@@ -11,27 +11,27 @@ cd /opt/exporter/
 tar zxvf rabbitmq_exporter-1.0.0-RC7.linux-amd64.tar.gz
 cp -f rabbitmq_exporter-1.0.0-RC7.linux-amd64/rabbitmq_exporter /opt/exporter/
 
-sed -i "s#RABBIT_USER=guest#RABBIT_USER=$1#g" /opt/exporter/rabbitmq_exporter.init
-sed -i "s#RABBIT_PASSWORD=guest#RABBIT_PASSWORD=$2#g" /opt/exporter/rabbitmq_exporter.init
-sed -i "s#OUTPUT_FORMAT=JSON#OUTPUT_FORMAT=$3#g" /opt/exporter/rabbitmq_exporter.init
-sed -i "s#PUBLISH_PORT=9419#PUBLISH_PORT=$4#g" /opt/exporter/rabbitmq_exporter.init
-sed -i "s#RABBIT_URL=http://localhost:15672#RABBIT_URL=$5#g" /opt/exporter/rabbitmq_exporter.init
+sed -i "s#RABBIT_USER=guest#RABBIT_USER="$1"#g" /opt/exporter/rabbitmq_exporter.init
+sed -i "s#RABBIT_PASSWORD=guest#RABBIT_PASSWORD="$2"#g" /opt/exporter/rabbitmq_exporter.init
+sed -i "s#OUTPUT_FORMAT=JSON#OUTPUT_FORMAT="$3"#g" /opt/exporter/rabbitmq_exporter.init
+sed -i "s#PUBLISH_PORT=9419#PUBLISH_PORT="$4"#g" /opt/exporter/rabbitmq_exporter.init
+sed -i "s#RABBIT_URL=http://localhost:15672#RABBIT_URL="$5"#g" /opt/exporter/rabbitmq_exporter.init
 
-sed -i "s#RABBIT_USER=guest#RABBIT_USER=$1#g" /opt/exporter/rabbitmq_exporter.service
-sed -i "s#RABBIT_PASSWORD=guest#RABBIT_PASSWORD=$2#g" /opt/exporter/rabbitmq_exporter.service
-sed -i "s#OUTPUT_FORMAT=JSON#OUTPUT_FORMAT=$3#g" /opt/exporter/rabbitmq_exporter.service
-sed -i "s#PUBLISH_PORT=9419#PUBLISH_PORT=$4#g" /opt/exporter/rabbitmq_exporter.service
-sed -i "s#RABBIT_URL=http://localhost:15672#RABBIT_URL=$5#g" /opt/exporter/rabbitmq_exporter.service
+sed -i "s#RABBIT_USER=guest#RABBIT_USER="$1"#g" /opt/exporter/rabbitmq_exporter.service
+sed -i "s#RABBIT_PASSWORD=guest#RABBIT_PASSWORD="$2"#g" /opt/exporter/rabbitmq_exporter.service
+sed -i "s#OUTPUT_FORMAT=JSON#OUTPUT_FORMAT="$3"#g" /opt/exporter/rabbitmq_exporter.service
+sed -i "s#PUBLISH_PORT=9419#PUBLISH_PORT="$4"#g" /opt/exporter/rabbitmq_exporter.service
+sed -i "s#RABBIT_URL=http://localhost:15672#RABBIT_URL="$5"#g" /opt/exporter/rabbitmq_exporter.service
 
 if ! hash systemctl 2>/dev/null;then 
-    sudo mv -f /opt/exporter/rabbitmq_exporter.init /etc/init.d/rabbitmq_exporter
+    sudo cp -f /opt/exporter/rabbitmq_exporter.init /etc/init.d/rabbitmq_exporter
     sudo chmod 777 /etc/init.d/rabbitmq_exporter
     sudo chkconfig rabbitmq_exporter on
     sudo service rabbitmq_exporter restart
 fi
 
 if hash systemctl 2>/dev/null;then 
-    sudo mv -f /opt/exporter/rabbitmq_exporter.service /usr/lib/systemd/system/
+    sudo cp -f /opt/exporter/rabbitmq_exporter.service /usr/lib/systemd/system/
     sudo systemctl daemon-reload
     sudo systemctl enable rabbitmq_exporter
     sudo systemctl restart rabbitmq_exporter
