@@ -11,11 +11,11 @@
 case "$1" in
 start)
     echo "start node_exporter"
-    /opt/exporter/node_exporter --web.listen-address=0.0.0.0:9100 --collector.textfile.directory=/opt/exporter/key/ &
+    /opt/exporter/node_exporter --web.listen-address=0.0.0.0:9100 --collector.textfile.directory=/opt/exporter/key/ >/dev/null 2>&1 &
 	;;
 stop)
     echo "stop node_exporter"
-    ps aux|grep /opt/exporter/node_exporter|grep -v grep|awk '{print $2}'|xargs kill -9
+    ps aux|grep /opt/exporter/node_exporter|grep -Ev '(grep|service|systemctl|.sh)'|awk '{print $2}'|xargs kill -9
     ;;
 restart)
     $0 stop

@@ -2,7 +2,7 @@
 User=root
 Group=root
 ExecStart=/opt/exporter/mysqld_exporter --web.listen-address=0.0.0.0:9104 --config.my-cnf=/opt/exporter/3306.cnf
-ExecStop=ps aux|grep /opt/exporter/mysqld_exporter|grep -v grep|awk '{print $2}'|xargs kill -9
+ExecStop=ps aux|grep /opt/exporter/mysqld_exporter|grep -Ev '(grep|service|systemctl|.sh)'|awk '{print $2}'|xargs kill -9
 Restart=on-failure
 
 [Install]

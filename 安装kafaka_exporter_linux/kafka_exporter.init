@@ -11,11 +11,11 @@
 case "$1" in
 start)
     echo "start kafka_exporter"
-    /opt/exporter/kafka_exporter --kafka.server=kafka_ip:kafka_port --web.listen-address=":9308" &
+    /opt/exporter/kafka_exporter --kafka.server=kafka_ip:kafka_port --web.listen-address=":9308" >/dev/null 2>&1 &
 	;;
 stop)
     echo "stop kafka_exporter"
-    ps aux|grep /opt/exporter/kafka_exporter|grep -v grep|awk '{print $2}'|xargs kill -9
+    ps aux|grep /opt/exporter/kafka_exporter|grep -Ev '(grep|service|systemctl|.sh)'|awk '{print $2}'|xargs kill -9
     ;;
 restart)
     $0 stop

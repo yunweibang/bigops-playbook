@@ -12,8 +12,13 @@ echo ${memavailable} ${memtotal} | awk '{print "mem_usage "100 - ($1/$2 * 100.0)
 cpu_usage=$(mpstat -P ALL 1 10|awk '$1 ~ /^Average/ && $2 ~ /all/ {print 100-$NF}')
 echo "cpu_usage ${cpu_usage}" >>/opt/exporter/key/syskey.prom.tmp
 
-TCP_PORT=$(ss -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
-UDP_PORT=$(ss -nplu|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
+if [ -f /usr/bin/systemctl ];then
+	TCP_PORT=$(sudo ss -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
+	UDP_PORT=$(sudo ss -nplu|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
+else
+	TCP_PORT=$(sudo netstat -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
+	UDP_PORT=$(sudo netstat -nplu|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')
+fi
 
 if [ ! -z "${TCP_PORT}" ];then
     echo "${TCP_PORT}"|awk '{print "tcp_port_status{port=\""$1"\"} 1" }' >>/opt/exporter/key/syskey.prom.tmp

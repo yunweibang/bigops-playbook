@@ -23,11 +23,12 @@ if [ -f "/opt/exporter/userkey.sh" ];then
     mv -f /opt/exporter/userkey.sh /opt/exporter/key/
 fi
 
-chmod 777 /opt/exporter/MegaCli /opt/exporter/lsb_release /opt/exporter/mpstat
+chmod 777 /opt/exporter/ss /opt/exporter/ss_c6 /opt/exporter/lsb_release /opt/exporter/mpstat
 
 chmod +x /opt/exporter/key/* 
 
 timeout 30 /bin/bash /opt/exporter/key/*key.sh
+
 
 if ! hash systemctl 2>/dev/null;then 
     sudo mv -f /opt/exporter/node_exporter.init /etc/init.d/node_exporter

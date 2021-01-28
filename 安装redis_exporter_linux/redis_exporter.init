@@ -11,11 +11,11 @@
 case "$1" in
 start)
     echo "start redis_exporter"
-    /opt/exporter/redis_exporter -redis.addr redis_addr -redis.password reids_pass &
+    /opt/exporter/redis_exporter -redis.addr redis_addr -redis.password reids_pass >/dev/null 2>&1 &
     ;;
 stop)
     echo "stop redis_exporter"
-    ps aux|grep /opt/exporter/redis_exporter|grep -v grep|awk '{print $2}'|xargs kill -9
+    ps aux|grep /opt/exporter/redis_exporter|grep -Ev '(grep|service|systemctl|.sh)'|awk '{print $2}'|xargs kill -9
     ;;
 restart)
     $0 stop

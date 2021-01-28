@@ -11,12 +11,12 @@
 case "$1" in
 start)
     echo "start rabbitmq_exporter"
-    RABBIT_USER=guest RABBIT_PASSWORD=guest OUTPUT_FORMAT=JSON PUBLISH_PORT=9419 RABBIT_URL=http://localhost:15672 /opt/exporter/rabbitmq_exporter --web.listen-address=0.0.0.0:9419 &
+    RABBIT_USER=guest RABBIT_PASSWORD=guest OUTPUT_FORMAT=JSON PUBLISH_PORT=9419 RABBIT_URL=http://localhost:15672 /opt/exporter/rabbitmq_exporter --web.listen-address=0.0.0.0:9419 >/dev/null 2>&1 &
 
 	;;
 stop)
     echo "stop rabbitmq_exporter"
-    ps aux|grep /opt/exporter/rabbitmq_exporter|grep -v grep|awk '{print $2}'|xargs kill -9
+    ps aux|grep /opt/exporter/rabbitmq_exporter|grep -Ev '(grep|service|systemctl|.sh)'|awk '{print $2}'|xargs kill -9
     ;;
 restart)
     $0 stop

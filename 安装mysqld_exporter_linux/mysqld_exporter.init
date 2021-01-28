@@ -11,11 +11,11 @@
 case "$1" in
 start)
     echo "start mysqld_exporter"
-    /opt/exporter/mysqld_exporter --web.listen-address=0.0.0.0:9104 --config.my-cnf=/opt/exporter/3306.cnf &
+    /opt/exporter/mysqld_exporter --web.listen-address=0.0.0.0:9104 --config.my-cnf=/opt/exporter/3306.cnf >/dev/null 2>&1 &
 	;;
 stop)
     echo "stop mysqld_exporter"
-    ps aux|grep /opt/exporter/mysqld_exporter|grep -v grep|awk '{print $2}'|xargs kill -9
+    ps aux|grep /opt/exporter/mysqld_exporter|grep -Ev '(grep|service|systemctl|.sh)'|awk '{print $2}'|xargs kill -9
     ;;
 restart)
     $0 stop

@@ -12,11 +12,11 @@ case "$1" in
 start)
     echo "start oracle_exporter"
     export DATA_SOURCE_NAME="oracle_user/oracle_pass@//oracle_host:oracle_port/oracle_service"
-    /opt/exporter/oracle_exporter --log.level error --web.listen-address 0.0.0.0:9161 &
+    /opt/exporter/oracle_exporter --log.level error --web.listen-address 0.0.0.0:9161 >/dev/null 2>&1 &
 	;;
 stop)
     echo "stop oracle_exporter"
-    ps aux|grep /opt/exporter/oracle_exporter|grep -v grep|awk '{print $2}'|xargs kill -9
+    ps aux|grep /opt/exporter/oracle_exporter|grep -Ev '(grep|service|systemctl|.sh)'|awk '{print $2}'|xargs kill -9
     ;;
 restart)
     $0 stop

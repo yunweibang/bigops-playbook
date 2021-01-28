@@ -11,7 +11,7 @@
 case "$1" in
 start)
     echo "start zabbix_agentd"
-    /usr/sbin/zabbix_agentd -c /etc/zabbix/zabbix_agentd.conf &
+    /usr/sbin/zabbix_agentd -c /etc/zabbix/zabbix_agentd.conf >/dev/null 2>&1 &
     ;;
 stop)
     echo "stop zabbix_agentd"

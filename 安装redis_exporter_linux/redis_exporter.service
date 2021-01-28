@@ -2,7 +2,7 @@
 User=root
 Group=root
 ExecStart=/opt/exporter/redis_exporter -redis.addr redis_addr -redis.password reids_pass
-ExecStop=ps aux|grep /opt/exporter/redis_exporter|grep -v grep|awk '{print $2}'|xargs kill -9
+ExecStop=ps aux|grep /opt/exporter/redis_exporter|grep -Ev '(grep|service|systemctl|.sh)'|awk '{print $2}'|xargs kill -9
 Restart=on-failure
 
 [Install]

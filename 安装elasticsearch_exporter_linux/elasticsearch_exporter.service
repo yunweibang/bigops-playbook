@@ -2,7 +2,7 @@
 User=root
 Group=root
 ExecStart=/opt/exporter/elasticsearch_exporter --es.all --es.indices --es.cluster_settings --es.indices_settings --es.shards --es.snapshots --es.timeout=10s --web.listen-address ":9114" --web.telemetry-path "/metrics" --es.uri http://es_user:es_pass@@es_ip:es_port
-ExecStop=ps aux|grep /opt/exporter/elasticsearch_exporter|grep -v grep|awk '{print $2}'|xargs kill -9
+ExecStop=ps aux|grep /opt/exporter/elasticsearch_exporter|grep -Ev '(grep|service|systemctl|.sh)'|awk '{print $2}'|xargs kill -9
 Restart=on-failure
 
 [Install]
