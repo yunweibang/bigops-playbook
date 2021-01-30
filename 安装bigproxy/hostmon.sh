@@ -72,14 +72,14 @@ echo
 
 #处理简单Ping的icmpping监控项
 if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|icmpping_status\|\|')" ];then
-  INTERVAL="$(echo "${ITEM}"|grep -E '^0\|\|icmpping_status\|\|'|head -n 1|awk -F'[|][|]' '{print $3}')"
+  INTERVAL="$(echo "${ITEM}"|grep -E '^0\|\|icmpping_status\|\|'|awk -F'[|][|]' 'NR==1{print $3}')"
   if [[ "$((${CUR_SEC} % ${INTERVAL}))" -eq 0 ]];then
     ICMPPING="$(fping -q -c 2 "${CLIENT_IP}" 2>&1)"
     if [ -z "$(echo "${ICMPPING}"|grep 'xmt/rcv')" ];then
       echo "icmpping超时，退出采集！"
       exit
     fi
-    ICMPPING_LOSS="$(echo "${ICMPPING}"|awk '/loss/{print $5}'|awk -F/ '{print $NF}'|sed 's/%//g'|sed 's/,//g')"
+    ICMPPING_LOSS="$(echo "${ICMPPING}"|awk '/loss/{print $5}'|awk -F/ '{print $NF}'|sed 's/[,|%]//g')"
     ICMPPING_LATENCY="$(echo "${ICMPPING}"|awk '/xmt/{print $NF}'|awk -F/ '{print $2}')"
     echo -e "\n--------处理Ping监控项--------"
     if [[ ! -z "${ICMPPING_LOSS}" ]] && [[ "${ICMPPING_LOSS}" -ne 100 ]];then
@@ -158,7 +158,7 @@ if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|udpping_status')" ];then
         echo -e "\n入库${KEY_LIST}状态"
         echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=udping_status&value=${UDPPING_STATUS}\""
         ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=udpping_status&value=${UDPPING_STATUS}"
-        UDPPING_LATENCY=$(echo "${UDPPING}"|grep 'latency'|awk '{print $4}'|sed 's/[s|(]//g')
+        UDPPING_LATENCY=$(echo "${UDPPING}"|awk '/latency/{print $4}'|sed 's/[s|(]//g')
         echo -e "\n入库${KEY_LIST}延迟"
         echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=udpping_lateny&value=${UDPPING_LATENCY}\""
         ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=udpping_lateny&value=${UDPPING_LATENCY}"
@@ -258,10 +258,10 @@ do
 
   #如果更新模式是exporter，获取内容
   if [ ! -z "$(echo "${item_line}"|grep ^1)" ];then
-    #echo "curl -q --connect-timeout 5 \"${ENDPOINT}\""
-    ALL_METRICS="$(curl -q --connect-timeout 5 "${ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
+    #echo "curl --compressed -q --connect-timeout 5 \"${ENDPOINT}\""
+    ALL_METRICS="$(curl --compressed -q --connect-timeout 5 "${ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
     if [ $? -ne 0 ];then
-      echo "连接错误，请检查 curl -q ${ENDPOINT}"
+      echo "连接错误，请检查 curl --compressed -q ${ENDPOINT}"
       continue
     fi
   fi
@@ -349,10 +349,10 @@ if [ ! -z "${LLD_LIST}" ];then
 
     #如果发现模式是exporter，获取endpoint内容
     if [ ! -z "$(echo "${LLD_MODE}"|grep ^1)" ];then
-      echo -e "curl -q --connect-timeout 5 \"${LLD_ENDPOINT}\""
-	    LLD_ALL_METRICS="$(curl -q --connect-timeout 5 "${LLD_ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
+      echo -e "curl --compressed -q --connect-timeout 5 \"${LLD_ENDPOINT}\""
+	    LLD_ALL_METRICS="$(curl --compressed -q --connect-timeout 5 "${LLD_ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
       if [ $? -ne 0 ];then
-         echo "连接错误，请检查 curl -q ${LLD_ENDPOINT}"
+         echo "连接错误，请检查 curl --compressed -q ${LLD_ENDPOINT}"
          continue
        fi
     fi
