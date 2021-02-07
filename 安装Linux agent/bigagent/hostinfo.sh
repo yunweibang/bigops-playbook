@@ -51,7 +51,7 @@ HOSTINFO="{
 \"product_name\": \"${product_name}\",
 \"product_serial\": \"${product_serial}\"
 }"
-elif
+else
 HOSTINFO="{
 \"nodename\": \"${nodename}\",
 \"cpu_count\": ${cpu_count},

@@ -41,7 +41,7 @@ https://github.com/prometheus/node_exporter/
       shell: /bin/bash /opt/exporter/node_exporter.sh
       
     - name: 添加cron
-      cron: name='node_exporter' minute=*/1 job='timeout 30 /bin/bash /opt/exporter/key/*key.sh >/dev/null 2>&1'
+      cron: name='node_exporter' minute=*/1 job='timeout 50 /opt/exporter/key/syskey.sh >/dev/null 2>&1'
   
 
   

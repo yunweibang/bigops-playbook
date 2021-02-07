@@ -10,6 +10,8 @@ if [ `arch` != "x86_64" ];then
     exit
 fi
 
+sudo chown -R bigops:bigops /opt/bigops/
+
 if [ -f /opt/bigops/bigagent/bigagent.conf ];then
     cp -f /opt/bigops/bigagent/bigagent.conf /opt/bigops/bigagent.conf
 fi
@@ -22,5 +24,5 @@ if [ -f /opt/bigops/bigagent.conf ];then
 	mv -f /opt/bigops/bigagent.conf /opt/bigops/bigagent/bigagent.conf 
 fi
 
-sudo chown -R bigops:bigops /opt/bigops/
+
 

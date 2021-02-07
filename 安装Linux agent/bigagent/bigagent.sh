@@ -31,16 +31,16 @@ fi
 
 echo
 
-echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.4.4\""
+echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.4\""
 echo
-${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.4.4"
+${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.4"
 echo -e "\n\n"
 
 if [ $? != 0 ];then
     echo "# 任务失败"
 fi
 
-if [ "$((${CUR_SEC} % 15))" = '0' ];then
+if [ "$((${CUR_SEC} % 15))" == '0' ];then
     
     PCPU=$(/usr/bin/ps -eo user,pid,pcpu,pmem,tty,stat,lstart,etime,cmd --sort=-pcpu|sed '1d'|head -n 5)
     RSS=$(/usr/bin/ps -eo user,pid,pcpu,pmem,tty,stat,lstart,etime,cmd --sort=-rss|sed '1d'|head -n 5)
@@ -63,7 +63,7 @@ fi
 
 echo -e "\n\n"
 
-if [ "$((${CUR_SEC} % 20))" = '0' ];then
+if [ "$(date +%M)" == '10' ] ;then
    
     NETSTAT_IP=$(timeout 5 sudo netstat -npltu|sed '1,2d'|grep -Ev '^(tcp6|udp6)'|awk '/udp/{$5=$5"||LISTEN"}{print $1"||"$2"||"$3"||"$4"||"$5"||"$6"||"$7,$8,$9,$10}'|awk -F/ '{print $1"||"$2}'|grep -Ev 'ntpdate'|sed 's/[ ]*$/||/g'|sed 's/||||$/||/g')
     echo "${CURL} ${proxy}/agent/netstat -d \"id=${host_id}&ak=${host_ak}&type=ip\" --data-urlencode \"netstat=${NETSTAT_IP}\""
@@ -87,7 +87,7 @@ fi
 
 echo -e "\n\n"
 
-if [ "$(date +%M)" == '10' ];then
+if [ "$(date +%M)" == '30' ];then
    
     CROND_STATUS=$(ps aux|grep -v grep|grep -E '(cron|crond)($| )')
     if [ ! -z "${CROND_STATUS}" ];then

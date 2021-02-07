@@ -13,7 +13,7 @@ export SYSTEM_CAT=$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $4}')
 export EXEC_TIME=$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $5}')
 export CUR_SEC=$(date -d @${EXEC_TIME} "+%M"|sed -r 's/0*([0-9])/\1/')
 
-export CURL="curl -s --connect-timeout 5 -X POST"
+export CURL="curl -s --connect-timeout 15 -X POST"
 export SEND="${CURL}"" ${PROXY}/agent/mon/host"
 export LLD_SEND="${CURL}"" ${PROXY}/agent/discovery/host"
 export LLD_UPDATE="${CURL}"" ${PROXY}/agent/discovery/updatenetif"
@@ -35,7 +35,7 @@ echo -e "proxy_name：${proxy_name}"
 
 echo "/bin/bash /opt/bigops/bigproxy/hostmon.sh" \'"$1"\'
 
-echo "EXEC_TIME：$(date -d @${EXEC_TIME} "+%Y-%m-%d %H:%M:%S")"
+echo "EXEC_START_TIME：$(date -d @${EXEC_TIME} "+%Y-%m-%d %H:%M:%S")"
 
 echo -e "\n--------获取监控项列表--------"
 
@@ -175,14 +175,15 @@ fi
 
 #获取Ansbile连接信息
 if [ ! -z "$(echo "${ITEM}"|grep -E '^2\|\|')" ];then
-  export ANSIBLE_HOSTS="${TEMP_DIR}/${HOST_ID}_host"
-  export ANSIBLE_CMD="ansible -i ${ANSIBLE_HOSTS} all"
+  export ANSIBLE_HOSTS=$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $6}')
+  export ANSIBLE_HOSTS="/opt/bigops/bigproxy/hosts/${HOSTS}"
 
-  if [ ! -s "${ANSIBLE_HOSTS}" ];then
+  if [ ! -f "${ANSIBLE_HOSTS}" ];then
     echo "没有发现ansible hosts文件：${ANSIBLE_HOSTS}"
   else
     echo -e "\n--------Anbile命令--------"
     echo "ANSIBLE_CMD=\"ansible -i ${ANSIBLE_HOSTS} all\""
+    export ANSIBLE_CMD="ansible -i ${ANSIBLE_HOSTS} all"
   fi
 fi
 
@@ -258,8 +259,8 @@ do
 
   #如果更新模式是exporter，获取内容
   if [ ! -z "$(echo "${item_line}"|grep ^1)" ];then
-    #echo "curl --compressed -q --connect-timeout 5 \"${ENDPOINT}\""
-    ALL_METRICS="$(curl --compressed -q --connect-timeout 5 "${ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
+    #echo "curl --compressed -q --connect-timeout 15 \"${ENDPOINT}\""
+    ALL_METRICS="$(curl --compressed -q --connect-timeout 15 "${ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
     if [ $? -ne 0 ];then
       echo "连接错误，请检查 curl --compressed -q ${ENDPOINT}"
       continue
@@ -349,8 +350,8 @@ if [ ! -z "${LLD_LIST}" ];then
 
     #如果发现模式是exporter，获取endpoint内容
     if [ ! -z "$(echo "${LLD_MODE}"|grep ^1)" ];then
-      echo -e "curl --compressed -q --connect-timeout 5 \"${LLD_ENDPOINT}\""
-	    LLD_ALL_METRICS="$(curl --compressed -q --connect-timeout 5 "${LLD_ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
+      echo -e "curl --compressed -q --connect-timeout 15 \"${LLD_ENDPOINT}\""
+	    LLD_ALL_METRICS="$(curl --compressed -q --connect-timeout 15 "${LLD_ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
       if [ $? -ne 0 ];then
          echo "连接错误，请检查 curl --compressed -q ${LLD_ENDPOINT}"
          continue
@@ -383,4 +384,5 @@ if [ ! -z "${LLD_LIST}" ];then
   done
 fi
 
-
+echo
+echo "EXEC_END_TIME：$(date -d @${EXEC_TIME} "+%Y-%m-%d %H:%M:%S")"

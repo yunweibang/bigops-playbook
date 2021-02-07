@@ -25,9 +25,9 @@ fi
 
 chmod 777 /opt/exporter/ss /opt/exporter/ss_c6 /opt/exporter/lsb_release /opt/exporter/mpstat
 
-chmod +x /opt/exporter/key/* 
+chmod 777 /opt/exporter/key/* 
 
-timeout 30 /bin/bash /opt/exporter/key/*key.sh
+timeout 50 /bin/bash /opt/exporter/key/*key.sh
 
 
 if ! hash systemctl 2>/dev/null;then 

@@ -1,9 +1,0 @@
-[Service]
-User=root
-Group=root
-ExecStart=/opt/exporter/kafka_exporter --kafka.server=kafka_ip:kafka_port --web.listen-address=":9308"
-ExecStop=ps aux|grep /opt/exporter/kafka_exporter|grep -Ev '(grep|service|systemctl|.sh)'|awk '{print $2}'|xargs kill -9
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target

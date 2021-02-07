@@ -14,6 +14,9 @@
   gather_facts: no
 
   tasks:
+    - name: 目录授权    
+      shell: if [ ! -d /opt/bigops/ ];then sudo mkdir -p /opt/bigops/;sudo chown -R bigops:bigops /opt/bigops/;fi
+
     - name: 上传文件到远程
       copy: src={{ item }} dest=/opt/bigops/
       with_fileglob:

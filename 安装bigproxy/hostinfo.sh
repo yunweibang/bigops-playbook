@@ -15,11 +15,12 @@ export CUR_SEC=$(date -d @${EXEC_TIME} "+%M"|sed -r 's/0*([0-9])/\1/')
 
 export CURL="timeout 10 curl -s -X POST"
 
-export ANSIBLE_HOSTS="${TEMP_DIR}/${HOST_ID}_host"
+export ANSIBLE_HOSTS=$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $6}')
+export ANSIBLE_HOSTS="/opt/bigops/bigproxy/hosts/${HOSTS}"
 export ANSIBLE_CMD="timeout 10 ansible -i ${ANSIBLE_HOSTS} all"
 
 
-find ${TEMP_DIR} -mtime +1 -name "*" -exec rm -f {} \;
+find ${TEMP_DIR} -mtime +0 -name "*" -exec rm -f {} \;
 
 if [[ -z "${HOST_ID}" ]] || [[ -z "${HOST_AK}" ]] || [[ -z "${CLIENT_IP}" ]] || [[ -z "${SYSTEM_CAT}" ]] || [[ -z "${EXEC_TIME}" ]];then
     echo "HOST_ID、HOST_AK、CLIENT_IP、SYSTEM_CAT、EXEC_TIME有一项为空"
