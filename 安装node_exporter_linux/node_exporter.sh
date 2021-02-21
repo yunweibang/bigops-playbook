@@ -8,8 +8,8 @@ if [ `arch` != "x86_64" ];then
 fi
 
 cd /opt/exporter/
-tar zxvf node_exporter-0.18.1.linux-amd64.tar.gz
-cp -f node_exporter-0.18.1.linux-amd64/node_exporter /opt/exporter/
+tar zxvf node_exporter-1.1.0.linux-amd64.tar.gz
+cp -f node_exporter-1.1.0.linux-amd64/node_exporter /opt/exporter/
 
 if [ ! -d /opt/exporter/key/ ];then
     mkdir /opt/exporter/key/

@@ -31,10 +31,6 @@ sudo grep -Ev '(dm-|sr|fb)' /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_
 sudo grep -Ev '(dm-|sr|fb)' /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_readiops{device=\"/dev/"$3"\"}",$4}' >>/opt/exporter/key/syskey.tmp
 sudo grep -Ev '(dm-|sr|fb)' /proc/diskstats|awk '{if($3 ~ /[0-9]$/) print "disk_writeiops{device=\"/dev/"$3"\"}",$8}' >>/opt/exporter/key/syskey.tmp
 
-memtotal="$(free -m|grep Mem|awk '{print $2}')"
-memavailable="$(free -m|grep Mem| awk '{print $7}')"
-echo "${memavailable} ${memtotal}" | awk '{print "mem_usage "100 - ($1/$2 * 100.0)}' >>/opt/exporter/key/syskey.tmp
-
 disk_fs_max_usage="$(sudo df -k|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|grep '%'|awk '{print $5}'|sed 's/%//g'|sort -r|head -n 1)"
 disk_inode_max_usage="$(sudo df -i|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|grep '%'|awk '{print $5}'|sed 's/%//g'|sort -r|head -n 1)"
 echo "disk_fs_max_usage ${disk_fs_max_usage}" >>/opt/exporter/key/syskey.tmp
@@ -50,24 +46,6 @@ echo "proc_total ${proc_total}" >>/opt/exporter/key/syskey.tmp
 echo "proc_running ${proc_running}" >>/opt/exporter/key/syskey.tmp
 echo "proc_sleeping ${proc_sleeping}" >>/opt/exporter/key/syskey.tmp
 echo "proc_zombie ${proc_zombie}" >>/opt/exporter/key/syskey.tmp
-
-if [ -f /usr/bin/systemctl ];then
-  TCP_PORT="$(sudo ss -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')"
-  UDP_PORT="$(sudo ss -nplu|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')"
-else
-  TCP_PORT="$(sudo netstat -nplt|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')"
-  UDP_PORT="$(sudo netstat -nplu|awk '{print $4}'|awk -F: '{print $NF}'|grep -E '^[0-9]')"
-fi
-
-if [ ! -z "${TCP_PORT}" ];then
-    echo "${TCP_PORT}"|awk '{print "tcp_port_status{port=\""$1"\"} 1"}' >>/opt/exporter/key/syskey.tmp
-fi
-
-echo >>/opt/exporter/key/syskey.tmp
-
-if [ ! -z "${UDP_PORT}" ];then
-  echo "${UDP_PORT}"|awk '{print "udp_port_status{port=\""$1"\"} 1"}' >>/opt/exporter/key/syskey.tmp
-fi
 
 echo >>/opt/exporter/key/syskey.tmp
 

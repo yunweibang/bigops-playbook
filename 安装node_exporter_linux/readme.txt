@@ -8,7 +8,7 @@ https://github.com/prometheus/node_exporter/
 
 
 剧本附件：
-1：node_exporter-0.18.1.linux-amd64.tar.gz
+1：node_exporter-1.1.0.linux-amd64.tar.gz
 2：node_exporter.service
 3：node_exporter.init
 4：node_exporter.sh

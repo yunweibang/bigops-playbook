@@ -40,8 +40,7 @@ if [ $? != 0 ];then
     echo "# 任务失败"
 fi
 
-if [ "$((${CUR_SEC} % 15))" == '0' ];then
-    
+if [ "$((${CUR_SEC} % 10))" == '0' ];then
     PCPU=$(/usr/bin/ps -eo user,pid,pcpu,pmem,tty,stat,lstart,etime,cmd --sort=-pcpu|sed '1d'|head -n 5)
     RSS=$(/usr/bin/ps -eo user,pid,pcpu,pmem,tty,stat,lstart,etime,cmd --sort=-rss|sed '1d'|head -n 5)
     PS=$(echo -e "${PCPU}\n${RSS}"|sort -n|uniq|grep -Ev '0.0  0.0')
@@ -58,14 +57,12 @@ if [ "$((${CUR_SEC} % 15))" == '0' ];then
         ${CURL} ${proxy}/agent/ps_snapshot -d "id=${host_id}&ak=${host_ak}" --data-urlencode "ps_snapshot=${PS_SNAPSHOT}"
         echo
     fi
-
 fi
 
 echo -e "\n\n"
 
-if [ "$(date +%M)" == '10' ] ;then
-   
-    NETSTAT_IP=$(timeout 5 sudo netstat -npltu|sed '1,2d'|grep -Ev '^(tcp6|udp6)'|awk '/udp/{$5=$5"||LISTEN"}{print $1"||"$2"||"$3"||"$4"||"$5"||"$6"||"$7,$8,$9,$10}'|awk -F/ '{print $1"||"$2}'|grep -Ev 'ntpdate'|sed 's/[ ]*$/||/g'|sed 's/||||$/||/g')
+if [[ "$(date +%M)" == '10' ]] || [[ "$(date +%M)" == '40' ]] ;then 
+    NETSTAT_IP=$(timeout 10 sudo netstat -npltu|sed '1,2d'|grep -Ev '^(tcp6|udp6)'|awk '/udp/{$5=$5"||LISTEN"}{print $1"||"$2"||"$3"||"$4"||"$5"||"$6"||"$7,$8,$9,$10}'|awk -F/ '{print $1"||"$2}'|grep -Ev 'ntpdate'|sed 's/[ ]*$/||/g'|sed 's/||||$/||/g')
     echo "${CURL} ${proxy}/agent/netstat -d \"id=${host_id}&ak=${host_ak}&type=ip\" --data-urlencode \"netstat=${NETSTAT_IP}\""
 
     if [ ! -z "${NETSTAT_IP}" ];then
@@ -75,20 +72,40 @@ if [ "$(date +%M)" == '10' ] ;then
 
     echo -e "\n\n"
 
-    NETSTAT_IPC=$(timeout 5 sudo netstat -nplx|sed '1,2d'|grep -Ev '^(tcp6|udp6)'|awk 'sub("[/]"," ",$9)'|grep -Ev 'shim.sock'|awk '{print $1"||"$2"||"$3"||"$4"||"$5"||"$6"||"$7"||"$8"||"$9"||"$10"||"$11,$12,$13}'|sed 's/[ ]*$/||/g'|sed 's/||||$/||/g')
+    NETSTAT_IPC=$(timeout 10 sudo netstat -nplx|sed '1,2d'|grep -Ev '^(tcp6|udp6)'|awk 'sub("[/]"," ",$9)'|grep -Ev 'shim.sock'|awk '{print $1"||"$2"||"$3"||"$4"||"$5"||"$6"||"$7"||"$8"||"$9"||"$10"||"$11,$12,$13}'|sed 's/[ ]*$/||/g'|sed 's/||||$/||/g')
     echo "${CURL} ${proxy}/agent/netstat -d \"id=${host_id}&ak=${host_ak}&type=ipc\" --data-urlencode \"netstat=${NETSTAT_IPC}\""
 
     if [ ! -z "${NETSTAT_IPC}" ];then
         ${CURL} ${proxy}/agent/netstat -d "id=${host_id}&ak=${host_ak}&type=ipc" --data-urlencode "netstat=${NETSTAT_IPC}"
         echo
     fi
+fi
 
+echo -e "\n\n"
+
+APP_LLD="$(${CURL} -s ${proxy}/agent/app/lld  -d "id=${host_id}&ak=${host_ak}")"
+
+if [[ "$((${CUR_SEC} % 10))" == '0' ]] && [[ ! -z "${APP_LLD}" ]];then
+    EXPORTER_GATEWAY=$(timeout 10 sudo netstat -npltu|sed '1,2d'|grep -Ev '^(tcp6|udp)'|awk '{print $4,$NF}'|awk -F'[ |:|/]' '{print $2,$NF,$(NF-1)}')
+    echo "${EXPORTER_GATEWAY}"|while read i
+    do
+        APP_PORT=$(echo "${i}"|awk '{print $1}')
+        APP_NAME=$(echo "${i}"|awk '{print $2}')
+        APP_PID=$(echo "${i}"|awk '{print $3}')
+        echo "${APP_LLD}"|while read lld
+        do
+            if [ ! -z "$(grep -Ei "${lld}" /proc/${APP_PID}/cmdline)" ];then
+                echo "${CURL} ${proxy}/agent/exportergateway -d \"id=${host_id}&ak=${host_ak}&app_name=${APP_NAME}&app_port=${APP_PORT}\""
+                ${CURL} ${proxy}/agent/exportergateway -d "id=${host_id}&ak=${host_ak}&app_name=${APP_NAME}&app_port=${APP_PORT}"
+                echo
+            fi
+        done
+    done
 fi
 
 echo -e "\n\n"
 
 if [ "$(date +%M)" == '30' ];then
-   
     CROND_STATUS=$(ps aux|grep -v grep|grep -E '(cron|crond)($| )')
     if [ ! -z "${CROND_STATUS}" ];then
        CROND_STATUS=on
@@ -103,32 +120,13 @@ if [ "$(date +%M)" == '30' ];then
         ${CURL} ${proxy}/agent/cron -d "id=${host_id}&ak=${host_ak}&crond_status=${CROND_STATUS}" --data-urlencode "cron=${CRONTAB}"
         echo
     fi
-
-fi
-
-echo -e "\n\n"
-
-if [ "$(date +%M)" == '20' ];then
-    
-    CMD=$(ps aux|grep -E 'zabbix_agentd[ ]'|awk '{print $11}'|head -n 1)
-
-    if [ ! -z "${CMD}" ];then
-        VER=$(${CMD} -V|head -n 1|awk '{print $NF}')
-    else
-        echo "zabbix_agentd not running"
-        VER="not_running"
-    fi
-
-    echo "${CURL} ${proxy}/agent/zabbixagent/version -d \"id=${host_id}&ak=${host_ak}&zbx_agent_version=${VER}\""
-    ${CURL} ${proxy}/agent/zabbixagent/version -d "id=${host_id}&ak=${host_ak}&zbx_agent_version=${VER}" 
-
 fi
 
 echo -e "\n\n"
 
 if [ "$(date +%M)" == '30' ];then
     echo
-    timeout 10 /bin/bash ${base_dir}/hostinfo.sh
+    timeout 15 /bin/bash ${base_dir}/hostinfo.sh
 fi
 
 #软件版本

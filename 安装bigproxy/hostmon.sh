@@ -2,78 +2,109 @@
 
 eval $(grep -Ev '^spring_' /opt/bigops/bigproxy/config/bigproxy.properties|grep -Ev '^#')
 
-export PROXY="http://127.0.0.1:60001"
-export BASE_DIR="/opt/bigops/bigproxy"
-export TEMP_DIR="${BASE_DIR}/hostmon_temp"
+PROXY="http://127.0.0.1:60001"
+TEMP_DIR="/opt/bigops/bigproxy/hostmon_temp"
 
-export HOST_ID=$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $1}')
-export HOST_AK=$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $2}')
+export HOST_ID="$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $1}')"
+HOST_AK="$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $2}')"
 export CLIENT_IP=$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $3}')
 export SYSTEM_CAT=$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $4}')
 export EXEC_TIME=$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $5}')
-export CUR_SEC=$(date -d @${EXEC_TIME} "+%M"|sed -r 's/0*([0-9])/\1/')
+export CUR_SEC="$(date -d @${EXEC_TIME} "+%M"|sed -r 's/0*([0-9])/\1/')"
+TIMESTAMP="$(date -d @$((${EXEC_TIME}-3600*8)) "+%Y-%m-%dT%H:%M:%S.000Z")"
+ES_TIME="$(date -d @${EXEC_TIME} "+%Y%m%d")"
 
 export CURL="curl -s --connect-timeout 15 -X POST"
-export SEND="${CURL}"" ${PROXY}/agent/mon/host"
-export LLD_SEND="${CURL}"" ${PROXY}/agent/discovery/host"
 export LLD_UPDATE="${CURL}"" ${PROXY}/agent/discovery/updatenetif"
-
-find ${TEMP_DIR} -mtime +1 -name "*" -exec rm -f {} \;
 
 if [[ -z "${HOST_ID}" ]] || [[ -z "${HOST_AK}" ]] || [[ -z "${CLIENT_IP}" ]] || [[ -z "${EXEC_TIME}" ]];then
     echo "HOST_ID、HOST_AK、CLIENT_IP、EXEC_TIME有一项为空"
     exit
 fi
 
-if [ ! -d "${TEMP_DIR}" ];then
-    mkdir -p "${TEMP_DIR}"
+>${TEMP_DIR}/int.json
+>${TEMP_DIR}/dbl.json
+
+send () {
+#例子：send -k "in_rate" -v "${VALUE1}" -l "${LLD_VALUE}"
+echo "执行的send命令"
+echo "send $@"
+if [[ "$1" == "-k" ]] && [[ "$3" == "-v" ]] && [[ ! -z "$(echo "$4"|grep -E '^[0-9\.e\+]+$')" ]] && [[ "$5" == "" ]] ;then
+  VALUE="$(echo "$4"|awk '{printf("%.2f\n",$NF)}')"
+  if [ ! -z "$(echo "$2"|grep -E '^(icmpping_status|tcpping_status|udpping_status|proc_total|proc_running|proc_zombie|tcp_total|tcp_estab|tcp_synrecv|tcp_timewait|disk_fs_max_usage|disk_inode_max_usage)')" ];then
+    VALUE="$(echo "$4"|awk '{printf("%d\n",$NF)}')"
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"value\": ${VALUE}}" >>${TEMP_DIR}/int.json
+  elif [ ! -z "$(echo "$2"|grep -E '^(icmpping_latency|icmpping_loss|tcpping_latency|udpping_latency|cpu_usage|mem_usage)')" ];then
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"value\": ${VALUE}}" >>${TEMP_DIR}/dbl.json    
+  else
+    echo "${CURL} ${PROXY}/agent/mon/host -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=$2&value=${VALUE}\""
+    ${CURL} ${PROXY}/agent/mon/host -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=$2&value=${VALUE}"
+  fi
+elif [[ "$1" == "-k" ]] && [[ "$3" == "-v" ]] && [[ ! -z "$(echo "$4"|grep -E '^[0-9\.e\+]+$')" ]] && [[ "$5" == "-l" ]] && [[ "$6" != "" ]] && [[ "$7" == "" ]];then
+  VALUE="$(echo "$4"|awk '{printf("%.2f\n",$NF)}')"
+  if [ ! -z "$(echo "$2"|grep -E '^(disk_fs_usage|disk_inode_usage)')" ];then
+    VALUE="$(echo "$4"|awk '{printf("%d\n",$NF)}')"
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"lld_value\": \"$6\",\"value\": ${VALUE}}" >>${TEMP_DIR}/int.json
+  elif [ ! -z "$(echo "$2"|grep -E '^(xxxxxx|xxxxxx)')" ];then
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"lld_value\": \"$6\",\"value\": ${VALUE}}" >>${TEMP_DIR}/dbl.json    
+  else
+    echo "${CURL} ${PROXY}/agent/mon/host -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=$2&lld_value=$6&value=${VALUE}\""
+    ${CURL} ${PROXY}/agent/mon/host -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=$2&lld_value=$6&value=${VALUE}"
+  fi
+else
+  echo -e "\n--------send参数错误--------"
+  echo "$@"
 fi
+echo
+}
 
-date
-echo -e "proxy_id：${proxy_id}"
-echo -e "proxy_name：${proxy_name}"
+export -f send
 
-echo "/bin/bash /opt/bigops/bigproxy/hostmon.sh" \'"$1"\'
+send_lld () {
+#例子：send_lld -k "linux_disk" -v "${lld_value}"
+echo "执行的send_lld命令"
+echo "send_lld $@"
+if [[ "$1" == "-k" ]] && [[ "$3" == "-v" ]] && [[ "$5" == "" ]] ;then
+  echo "${CURL} ${PROXY}/agent/discovery/host -d \"id=${HOST_ID}&ak=${HOST_AK}&lld_key=$2&lld_value=${4}\""
+  ${CURL} ${PROXY}/agent/discovery/host -d "id=${HOST_ID}&ak=${HOST_AK}&lld_key=$2&lld_value=${4}"
+else
+  echo -e "\n--------send_lld参数错误--------"
+  echo "$@"
+fi
+}
 
-echo "EXEC_START_TIME：$(date -d @${EXEC_TIME} "+%Y-%m-%d %H:%M:%S")"
+export -f send_lld
+
+echo "EXEC_TIME：$(date -d @${EXEC_TIME} "+%Y-%m-%d %H:%M:%S")"
+echo "START_TIME：$(date "+%Y-%m-%d %H:%M:%S")"
+echo "proxy_id：${proxy_id}"
+echo "proxy_name：${proxy_name}"
+echo "/opt/bigops/bigproxy/hostmon.sh '$@'"
 
 echo -e "\n--------获取监控项列表--------"
-
-#echo "获取item"
 echo "${CURL} ${PROXY}/agent/template/host -d \"id=${HOST_ID}&ak=${HOST_AK}\""
-
 ITEM="$(${CURL} ${PROXY}/agent/template/host -d "id=${HOST_ID}&ak=${HOST_AK}" 2>&1)"
-
 if [ $? -ne 0 ];then
-  echo "curl超时"
-  sleep 1
-  ITEM="$(${CURL} ${PROXY}/agent/template/host -d "id=${HOST_ID}&ak=${HOST_AK}" 2>&1)"
+  echo "curl超时，退出！"
+  exit
 fi
-
 
 echo -e "\n第一列更新方式、第二列KEY、第三列间隔、第四列自动发现、第五列模板ID、第六列端点"
 #例子：1||mem_usage,cpu_usage||1||none||11||http://172.31.173.25:9100/metrics
 #echo -e "更新方式：0简单Ping、1Exporter、2Ansible、3SNMP、4IPMI、9自定义。"
 
 ITEM="$(echo "${ITEM}"|sed '/^[ \t]*$/d')"
-
-TIME=$(date -d @${EXEC_TIME} "+%Y-%m-%d %H:%M:%S")
-
-echo -e "\n--------获取ITEM列表--------"
+echo -e "${ITEM}\n"
 
 if [ -z "$(echo "${ITEM}"|grep -E '^[0-9]\|\|')" ];then
   echo "错误监控项，退出采集！"
-  echo "${ITEM}"
   exit
 fi
-
-echo "${ITEM}"
-echo 
 
 #处理简单Ping的icmpping监控项
 if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|icmpping_status\|\|')" ];then
   INTERVAL="$(echo "${ITEM}"|grep -E '^0\|\|icmpping_status\|\|'|awk -F'[|][|]' 'NR==1{print $3}')"
-  if [[ "$((${CUR_SEC} % ${INTERVAL}))" -eq 0 ]];then
+  if [ "$((${CUR_SEC} % ${INTERVAL}))" -eq 0 ];then
     ICMPPING="$(fping -q -c 2 "${CLIENT_IP}" 2>&1)"
     if [ -z "$(echo "${ICMPPING}"|grep 'xmt/rcv')" ];then
       echo "icmpping超时，退出采集！"
@@ -81,96 +112,74 @@ if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|icmpping_status\|\|')" ];then
     fi
     ICMPPING_LOSS="$(echo "${ICMPPING}"|awk '/loss/{print $5}'|awk -F/ '{print $NF}'|sed 's/[,|%]//g')"
     ICMPPING_LATENCY="$(echo "${ICMPPING}"|awk '/xmt/{print $NF}'|awk -F/ '{print $2}')"
-    echo -e "\n--------处理Ping监控项--------"
+    echo -e "--------处理icmpping监控项--------"
     if [[ ! -z "${ICMPPING_LOSS}" ]] && [[ "${ICMPPING_LOSS}" -ne 100 ]];then
-      echo -e "入库icmpping状态"
-      echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=icmpping_status&value=1\""
-      ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=icmpping_status&value=1"
-      echo -e "\n入库icmpping延迟"
-      echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=icmpping_latency&value=${ICMPPING_LATENCY}\""
-      ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=icmpping_latency&value=${ICMPPING_LATENCY}"
+      send -k icmpping_status -v 1
+      if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|icmpping_latency\|\|')" ];then
+        send -k icmpping_latency -v ${ICMPPING_LATENCY}
+      fi
     else 
-      echo -e "\n入库icmpping状态"
-      echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=icmpping_status&value=0\""
-      ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=icmpping_status&value=0"
+      send -k icmpping_status -v 0
     fi
-    echo -e "\n入库icmpping丢包率"
-    echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=icmpping_loss&value=${ICMPPING_LOSS}\""
-    ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=icmpping_loss&value=${ICMPPING_LOSS}"
+    if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|icmpping_loss\|\|')" ];then
+      send -k icmpping_loss -v ${ICMPPING_LOSS}
+    fi
     if [ "${ICMPPING_LOSS}" -eq 100 ];then
       echo "丢包率等于100%，退出采集！"
       exit  
     fi
   fi
-else
-  echo "请保证ICMP三个监控项都已启用，退出采集！"
-  exit
 fi
-
 
 #处理简单Ping的tcpping监控项
-if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|tcpping_status')" ];then
-
-  echo "${ITEM}"|grep -E '^0\|\|tcpping_status'|while read tcp_line
+echo "${ITEM}"|grep -E '^0\|\|tcpping_status\['|while read tcpping_line
+do
+  KEY_LIST="$(echo "${tcpping_line}"|awk -F'[|][|]' '{print $2}')"
+  INTERVAL="$(echo "${tcpping_line}"|awk -F'[|][|]' '{print $3}')"
+  echo "${KEY_LIST}"|sed 's/,/\n/g'|while read tcpping_key
   do
-    export KEY_LIST="$(echo "${tcp_line}"|awk -F'[|][|]' '{print $2}')"
-    export KEY="$(echo "${KEY_LIST}"|awk -F'[' '{print $1}')"
-    export PORT="$(echo "${KEY_LIST}"|awk -F'[' '{print $2}'|awk -F']' '{print $1}')"
-    export INTERVAL="$(echo "${tcp_line}"|awk -F'[|][|]' '{print $3}')"
-
-    echo -e "\n--------处理TCPPing监控项:${KEY_LIST}--------"
-    if [[ ! -z "$(echo "${KEY}"|grep '^tcpping_status\[')" ]] && [[ ! -z "${PORT}" ]] && [[ $((${CUR_SEC} % ${INTERVAL})) -eq 0 ]];then
-      TCPPING=$(nmap -n -P0 -sS --host-timeout=5000ms -p"${PORT}" "${CLIENT_IP}" 2>&1)
-      if [ ! -z "$(echo "${TCPPING}"|grep '/tcp open ')" ];then
-        TCPPING_STATUS=1
-        echo -e "\n入库${KEY_LIST}状态"
-        echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=tcpping_status&key=${KEY_LIST}&value=${TCPPING_STATUS}\""
-        ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=tcpping_status&value=${TCPPING_STATUS}"
-        TCPPING_LATENCY=$(echo "${TCPPING}"|grep 'latency'|awk '{print $4}'|sed 's/[s|(]//g')
-        echo -e "\n入库${KEY_LIST}延迟"
-        echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=tcpping_lateny&value=${TCPPING_LATENCY}\""
-        ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=tcpping_lateny&value=${TCPPING_LATENCY}"
+    TCPPING_KEY="$(echo ${tcpping_key}|awk -F'[' '{print $1}')"
+    TCPPING_PORT="$(echo "${tcpping_key}"|awk -F'[' '{print $2}'|awk -F']' '{print $1}')"
+    echo -e "--------处理tcpping监控项:${tcpping_key}--------"
+    if [ $((${CUR_SEC} % ${INTERVAL})) -eq 0 ];then
+      TCPPING="$(/usr/bin/nmap -n -P0 -sT --host-timeout=5000ms -p${TCPPING_PORT} ${CLIENT_IP} 2>&1)"
+      if [ ! -z "$(echo "${TCPPING}"|grep -E '/tcp open ')" ];then
+        send -k tcpping_status[${TCPPING_PORT}] -v 1
+        TCPPING_LATENCY=$(echo "${TCPPING}"|awk '/latency/{print $4}'|sed 's/[s|(]//g')
+        if [ ! -z "$(echo "${ITEM}"|grep -E "tcpping_latency\[${TCPPING_PORT}\]")" ];then
+          send -k tcpping_latency[${TCPPING_PORT}] -v ${TCPPING_LATENCY}
+        fi
       else
-        TCPPING_STATUS=0
-        echo -e "\n入库${KEY_LIST}状态"
-        echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=tcpping_status&key=${KEY_LIST}&value=${TCPPING_STATUS}\""
-        ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=tcpping_status&value=${TCPPING_STATUS}"
+        send -k tcpping_status[${TCPPING_PORT}] -v 0
       fi
     fi
   done
-fi
+done
 
 #处理简单Ping的udpping监控项
-if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|udpping_status')" ];then
-  echo "${ITEM}"|grep -E '^0\|\|udpping_status'|while read udp_line
+echo "${ITEM}"|grep -E '^0\|\|udpping_status\['|while read udpping_line
+do
+  KEY_LIST="$(echo "${udpping_line}"|awk -F'[|][|]' '{print $2}')"
+  INTERVAL="$(echo "${udpping_line}"|awk -F'[|][|]' '{print $3}')"
+  echo "${KEY_LIST}"|sed 's/,/\n/g'|while read udpping_key
   do
-    export KEY_LIST="$(echo "${udp_line}"|awk -F'[|][|]' '{print $2}')"
-    export KEY="$(echo "${KEY_LIST}"|awk -F'[' '{print $1}')"
-    export PORT="$(echo "${KEY_LIST}"|awk -F'[' '{print $2}'|awk -F']' '{print $1}')"
-    export INTERVAL="$(echo "${udp_line}"|awk -F'[|][|]' '{print $3}')"
-
-    echo -e "\n--------处理UDPPing监控项:${KEY_LIST}--------"
-
-    if [[ ! -z "$(echo "${KEY}"|grep '^udpping_status\[')" ]] && [[ ! -z "${PORT}" ]] && [[ $((${CUR_SEC} % ${INTERVAL})) -eq 0 ]];then
-      UDPPING=$(nmap -n -P0 -sU --host-timeout=5000ms -p"${PORT}" "${CLIENT_IP}" 2>&1)
-      if [ ! -z "$(echo "${UDPPING}"|grep '/udp open ')" ];then
-        UDPPING_STATUS=1
-        echo -e "\n入库${KEY_LIST}状态"
-        echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=udping_status&value=${UDPPING_STATUS}\""
-        ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=udpping_status&value=${UDPPING_STATUS}"
+    UDPPING_KEY="$(echo ${udpping_line}|awk -F'[' '{print $1}')"
+    UDPPING_PORT="$(echo "${udpping_line}"|awk -F'[' '{print $2}'|awk -F']' '{print $1}')"        
+    echo -e "--------处理udpping监控项:${udpping_key}--------"
+    if [ $((${CUR_SEC} % ${INTERVAL})) -eq 0 ];then
+      UDPPING="$(/usr/bin/nmap -n -P0 -sU --host-timeout=5000ms -p${UDPPING_PORT} ${CLIENT_IP} 2>&1)"
+      if [ ! -z "$(echo "${UDPPING}"|grep -E '/udp open ')" ];then
+        send -k udpping_status[${UDPPING_PORT}] -v 1
         UDPPING_LATENCY=$(echo "${UDPPING}"|awk '/latency/{print $4}'|sed 's/[s|(]//g')
-        echo -e "\n入库${KEY_LIST}延迟"
-        echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=udpping_lateny&value=${UDPPING_LATENCY}\""
-        ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=udpping_lateny&value=${UDPPING_LATENCY}"
+        if [ ! -z "$(echo "${ITEM}"|grep -E "udpping_latency\[${UDPPING_PORT}\]")" ];then
+          send -k udpping_lateny[${UDPPING_PORT}] -v ${UDPPING_LATENCY}
+        fi
       else
-        UDPPING_STATUS=0
-        echo -e "\n入库${KEY_LIST}状态"
-        echo "${SEND} -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=udping_status&value=${UDPPING_STATUS}\""
-        ${SEND} -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=udpping_status&value=${UDPPING_STATUS}"
+        send -k udpping_status[${UDPPING_PORT}] -v 0
       fi
     fi
   done
-fi
+done
 
 
 #获取Ansbile连接信息
@@ -187,7 +196,7 @@ if [ ! -z "$(echo "${ITEM}"|grep -E '^2\|\|')" ];then
   fi
 fi
 
-#--------获取SNMP连接信息--------
+#获取SNMP连接信息
 if [ ! -z "$(echo "${ITEM}"|grep -E '^3\|\|')" ];then
   SNMP_INFO="$(${CURL} ${PROXY}/agent/hostsnmp -d "id=${HOST_ID}&ak=${HOST_AK}" 2>&1)"
   snmp_proto=$(echo ${SNMP_INFO}|awk -F'[|][|]' '{print $1}')
@@ -232,7 +241,7 @@ fi
 
 #第一列IPMI IP、第二列IPMI用户、第三列IPMI密码。
 if [ ! -z "$(echo "${ITEM}"|grep -E '^4\|\|')" ];then
-  echo -e "\n--------获取IPMI连接信息--------"
+  echo -e "--------获取IPMI连接信息--------"
   IPMI_INFO="$(${CURL} ${PROXY}/agent/hostipmi/get -d "id=${HOST_ID}&ak=${HOST_AK}" 2>&1)"
   IPMI_HOST=$(echo "${SNMP_INFO}"|awk -F'[|][|]' '{print $1}')
   IPMI_USER=$(echo "${SNMP_INFO}"|awk -F'[|][|]' '{print $2}')
@@ -247,83 +256,61 @@ if [ ! -z "$(echo "${ITEM}"|grep -E '^4\|\|')" ];then
   fi
 fi
 
-echo -e "\n\n--------处理主机监控项--------"
+echo -e "--------处理主机监控项--------"
 
 echo "${ITEM}"|grep -E '^(1|2|3|4|9)\|\|'|while read item_line
 do
-  export KEY_LIST="$(echo "${item_line}"|awk -F'[|][|]' '{print $2}')"
-  export INTERVAL="$(echo "${item_line}"|awk -F'[|][|]' '{print $3}')"
-  export LLD_KEY="$(echo "${item_line}"|awk -F'[|][|]' '{print $4}')"
-  export TEMPALTE_ID="$(echo "${item_line}"|awk -F'[|][|]' '{print $5}')"
-  export ENDPOINT="$(echo "${item_line}"|awk -F'[|][|]' '{print $6}')"
+  KEY="$(echo "${item_line}"|awk -F'[|][|]' '{print $2}')"
+  INTERVAL="$(echo "${item_line}"|awk -F'[|][|]' '{print $3}')"
+  LLD_KEY="$(echo "${item_line}"|awk -F'[|][|]' '{print $4}')"
+  TEMPALTE_ID="$(echo "${item_line}"|awk -F'[|][|]' '{print $8}')"
+  ENDPOINT="$(echo "${item_line}"|awk -F'[|][|]' '{print $9}')"
 
-  #如果更新模式是exporter，获取内容
+  #如果更新模式是exporter，获取metrics内容
   if [ ! -z "$(echo "${item_line}"|grep ^1)" ];then
-    #echo "curl --compressed -q --connect-timeout 15 \"${ENDPOINT}\""
-    ALL_METRICS="$(curl --compressed -q --connect-timeout 15 "${ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
+    export METRICS="$(curl --compressed -q --connect-timeout 15 "${ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
     if [ $? -ne 0 ];then
       echo "连接错误，请检查 curl --compressed -q ${ENDPOINT}"
       continue
     fi
   fi
 
-  echo -e "\n--------下载Shell--------"
+  echo -e "\n--------下载${KEY}的Shell--------"
   echo "${CURL} ${PROXY}/agent/mon/shell -d \"id=${HOST_ID}&ak=${HOST_AK}&mon_template_id=${TEMPALTE_ID}\""
   ${CURL} ${PROXY}/agent/mon/shell -d "id=${HOST_ID}&ak=${HOST_AK}&mon_template_id=${TEMPALTE_ID}" 2>&1 >"${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh"
 
   if [[ ! -z "$(echo "${LLD_KEY}"|grep 'none')" ]] && [[ $((${CUR_SEC} % ${INTERVAL})) -eq 0 ]];then
-    echo -e "\n--------处理没有LLD的监控项${item_line}--------"
-    echo -e "\n--------调试Shell信息--------"
     echo "export ANSIBLE_CMD=\"${ANSIBLE_CMD}\""
     echo "export SNMP_CMD=\"${SNMP_CMD}\""
     echo "export IPMI_CMD=\"${IPMI_CMD}\""
-    echo "export LLD_SEND=\"${LLD_SEND}\""
-    echo "export LLD_UPDATE=\"${LLD_UPDATE}\""
-    echo "export HOST_ID=\"${HOST_ID}\""
-    echo "export HOST_AK=${HOST_AK}"
-    echo "export SEND=\"${SEND}\""
-    echo
+    echo -e "\n--------查看${KEY}的Shell内容--------"
     cat ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh
-    #执行Shell
-    echo -e "\n\n执行Shell命令：/bin/bash ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh"
-    shell_result="$(echo "${ALL_METRICS}"|/bin/bash ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh 2>&1)"
-    echo -e "\n\n--------执行Shell结果--------"
+    shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh 2>&1)"
+    echo -e "\n--------执行${KEY}的Shell结果--------"
     echo "${shell_result}"
   fi
 
   if [[ -z "$(echo "${LLD_KEY}"|grep 'none')" ]] && [[ $((${CUR_SEC} % ${INTERVAL})) -eq 0 ]];then
-    echo -e "\n--------处理有LLD的监控项${item_line}--------"
+    echo -e "\n--------监控项是${KEY}，LLD_KEY是${LLD_KEY}--------"
     echo "获取发现项"
     echo "${CURL} ${PROXY}/agent/lldvalue/host -d \"id=${HOST_ID}&ak=${HOST_AK}&lld_key=${LLD_KEY}\""
     LLD_VALUE_LIST=$(${CURL} ${PROXY}/agent/lldvalue/host -d "id=${HOST_ID}&ak=${HOST_AK}&lld_key=${LLD_KEY}" 2>&1)
     LLD_VALUE_LIST=$(echo "${LLD_VALUE_LIST}"|sed 's/|/\n/g')
     echo -e "\n发现项内容"
-    echo "${LLD_VALUE_LIST}"
+    echo -e "${LLD_VALUE_LIST}\n"
 
     #循环发现项
     echo "${LLD_VALUE_LIST}"|while read lld_value_line
     do
       export LLD_VALUE="${lld_value_line}"
-      echo -e "\n--------调试Shell信息--------"
       echo "export ANSIBLE_CMD=\"${ANSIBLE_CMD}\""
       echo "export SNMP_CMD=\"${SNMP_CMD}\""
       echo "export IPMI_CMD=\"${IPMI_CMD}\""
-      echo "export LLD_SEND=\"${LLD_SEND}\""
-      echo "export LLD_UPDATE=\"${LLD_UPDATE}\""
-      echo "export HOST_ID=\"${HOST_ID}\""
-      echo "export HOST_AK=${HOST_AK}"
-      echo "export SEND=\"${SEND}\""
-      echo "export LLD_KEY=${LLD_KEY}"
-      echo "export LLD_VALUE=${LLD_VALUE}"
-      echo
+      echo -e "\n--------查看${KEY}，${LLD_VALUE}的Shell内容--------"
       cat ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh
-
-      #执行Shell
-      echo -e "\n\n执行Shell命令：/bin/bash ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh"
-      shell_result="$(echo "${ALL_METRICS}"|/bin/bash ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh 2>&1)"
-      echo -e "\n\n--------执行Shell结果--------"
+      shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh 2>&1)"
+      echo -e "\n--------执行${KEY}，${LLD_VALUE}的Shell结果--------"
       echo "${shell_result}"
-
     done
   fi
 done
@@ -351,38 +338,44 @@ if [ ! -z "${LLD_LIST}" ];then
     #如果发现模式是exporter，获取endpoint内容
     if [ ! -z "$(echo "${LLD_MODE}"|grep ^1)" ];then
       echo -e "curl --compressed -q --connect-timeout 15 \"${LLD_ENDPOINT}\""
-	    LLD_ALL_METRICS="$(curl --compressed -q --connect-timeout 15 "${LLD_ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
+	    export LLD_METRICS="$(curl --compressed -q --connect-timeout 15 "${LLD_ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
       if [ $? -ne 0 ];then
          echo "连接错误，请检查 curl --compressed -q ${LLD_ENDPOINT}"
          continue
        fi
     fi
 
-    echo -e "\n--------下载Shell命令--------"
+    echo -e "\n--------下载${lld_line}的Shell命令--------"
     echo "${CURL} ${PROXY}/agent/template/host/lld/shell -d \"id=${HOST_ID}&ak=${HOST_AK}&id=${HOST_ID}&lld_key=${LLD_KEY}\""
     ${CURL} ${PROXY}/agent/template/host/lld/shell -d "id=${HOST_ID}&ak=${HOST_AK}&id=${HOST_ID}&lld_key=${LLD_KEY}" 2>&1 >"${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh"
 
     if [ $((${CUR_SEC} % ${LLD_INTERVAL})) -eq 0 ];then
-      echo -e "\n--------调试Shell信息--------"
       echo "export ANSIBLE_CMD=\"${ANSIBLE_CMD}\""
       echo "export SNMP_CMD=\"${SNMP_CMD}\""
       echo "export IPMI_CMD=\"${IPMI_CMD}\""
-      echo "export LLD_SEND=\"${LLD_SEND}\""
-      echo "export LLD_UPDATE=\"${LLD_UPDATE}\""
-      echo "export HOST_ID=${HOST_ID}"
-      echo "export HOST_AK=${HOST_AK}"
-      echo "export SEND=\"${SEND}\""
-      echo "export LLD_KEY=${LLD_KEY}"
-      echo
-      cat ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh
-
-      #echo "执行Shell命令：/bin/bash ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh"
-      shell_result="$(echo "${LLD_ALL_METRICS}"|/bin/bash ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh 2>&1)"
-      echo -e "\n\n--------执行Shell结果--------"
+      echo -e "\n--------查看${lld_line}的Shell内容--------"
+      cat "${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh"
+      shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh 2>&1)"
+      echo -e "\n--------执行${lld_line}的Shell结果--------"
       echo "${shell_result}"
     fi
   done
 fi
 
-echo
-echo "EXEC_END_TIME：$(date -d @${EXEC_TIME} "+%Y-%m-%d %H:%M:%S")"
+echo -e "\n-----------提交INT数据--------------"
+cat "${TEMP_DIR}/int.json"
+if [ -s "${TEMP_DIR}/int.json" ];then
+  echo "curl -s -XPOST -u${es_user}:${es_pass} -H \"Content-Type: application/json\" http://${es_ip}:${es_port}/monitor-history-int-${ES_TIME}/_doc/_bulk --data-binary @${TEMP_DIR}/int.json"
+  curl -s -XPOST -u${es_user}:${es_pass} -H "Content-Type: application/json" http://${es_ip}:${es_port}/monitor-history-int-${ES_TIME}/_doc/_bulk --data-binary @${TEMP_DIR}/int.json
+fi
+
+echo -e "\n\n-----------提交DBL数据--------------"
+
+cat "${TEMP_DIR}/dbl.json"
+if [ -s "${TEMP_DIR}/dbl.json" ];then
+  echo "curl -s -XPOST -u${es_user}:${es_pass} -H \"Content-Type: application/json\" http://${es_ip}:${es_port}/monitor-history-dbl-${ES_TIME}/_doc/_bulk --data-binary @${TEMP_DIR}/dbl.json"
+  curl -s -XPOST -u${es_user}:${es_pass} -H "Content-Type: application/json" http://${es_ip}:${es_port}/monitor-history-dbl-${ES_TIME}/_doc/_bulk --data-binary @${TEMP_DIR}/dbl.json
+fi
+
+echo -e "\n\nEND_TIME：$(date "+%Y-%m-%d %H:%M:%S")"
+
