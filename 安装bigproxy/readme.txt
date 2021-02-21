@@ -46,9 +46,9 @@
   gather_facts: no
 
   tasks:
-    - name: 停止服务
+    - name: 停止Proxy服务
       shell: sudo systemctl stop bigproxy
       
-    - name: 关闭服务
+    - name: 关闭Proxy服务
       shell: sudo systemctl disable bigproxy     
 

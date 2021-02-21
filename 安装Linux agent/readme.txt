@@ -38,7 +38,7 @@
   gather_facts: no
 
   tasks:
-    - name: 删除定时任务    
+    - name: 删除bigagent定时任务    
       cron: name='bigagent' state=absent
 
 
