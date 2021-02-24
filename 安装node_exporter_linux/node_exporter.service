@@ -1,7 +1,7 @@
 [Service]
 User=root
 Group=root
-ExecStart=/opt/exporter/node_exporter --web.listen-address=0.0.0.0:9100 --collector.textfile.directory=/opt/exporter/key/
+ExecStart=/opt/exporter/node_exporter --web.listen-address=0.0.0.0:9100 --collector.processes --collector.tcpstat --collector.textfile.directory=/opt/exporter/key/
 ExecStop=ps aux|grep /opt/exporter/node_exporter|grep -Ev '(grep|service|systemctl|.sh)'|awk '{print $2}'|xargs kill -9
 
 [Install]

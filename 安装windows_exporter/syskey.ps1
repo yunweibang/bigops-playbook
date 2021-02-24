@@ -21,7 +21,7 @@ function Invoke-TimeOutCommand()
  
 Invoke-TimeOutCommand -Timeout 15 -ScriptBlock {
 
-$basedir="c:/Program Files (x86)/wmi_exporter/key"
+$basedir="c:/Program Files/windows_exporter/key"
 $output_file="$basedir/syskey.prom"
 $output_file_tmp="$basedir/syskey.tmp"
 
@@ -90,38 +90,6 @@ netstat -ano|findstr /i "UDP "|findstr -v "\[::\]" |
   }
 
 
-# 获取进程状态
-
-foreach($file in tasklist /v /fo csv|convertfrom-csv|select '映像名称')
-{
-  $imagename1 = "$File.映像名称"
-  if ($imagename1)
-  {
-    $imagename1 = 'proc_status{name="' + "$imagename1" + '"}'
-    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename1 1"
-  }
-}
-
-foreach($file in tasklist /v /fo csv|convertfrom-csv|select 'imagename')
-{
-  $imagename2 = "$File.imagename"
-  if ($imagename2)
-  {
-    $imagename2 = 'proc_status{name="' + "$imagename2" + '"}'
-    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename2 1"
-  }
-}
-
-foreach($file in tasklist /v /fo csv|convertfrom-csv|select 'Image Name')
-{
-  $imagename3 = "$File.Image Name"
-  if ($imagename3)
-  {
-    $imagename3 = 'proc_status{name="' + "$imagename3" + '"}'
-    Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$imagename3 1"
-  }
-}
-
 # 获取网络连接状态
 
 $tcp_total= netstat -an ; $tcp_total=$tcp_total.count;
@@ -135,17 +103,5 @@ Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "tcp_synrecv $tcp_sy
 Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "tcp_timewait $tcp_timewait"
 
 
-# 获取分区使用率
-
-gwmi win32_logicaldisk -filter "drivetype = 3" | % {
-  $disk_fs='disk_fs_usage{volume="' + $_.deviceid +'"} '+ (($_.size-$_.freespace)/$_.size*100)
-  Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "$disk_fs"
-}
-
-Get-Content $output_file_tmp | Select-Object -unique|Set-content $output_file
-
-Remove-Item $output_file_tmp
-
-}
 
 

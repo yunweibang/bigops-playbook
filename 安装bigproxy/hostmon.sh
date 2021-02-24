@@ -14,40 +14,58 @@ export CUR_SEC="$(date -d @${EXEC_TIME} "+%M"|sed -r 's/0*([0-9])/\1/')"
 TIMESTAMP="$(date -d @$((${EXEC_TIME}-3600*8)) "+%Y-%m-%dT%H:%M:%S.000Z")"
 ES_TIME="$(date -d @${EXEC_TIME} "+%Y%m%d")"
 
-export CURL="curl -s --connect-timeout 15 -X POST"
-export LLD_UPDATE="${CURL}"" ${PROXY}/agent/discovery/updatenetif"
+INT_JSON="/opt/bigops/bigproxy/hostmon_temp/${HOST_ID}_${EXEC_TIME}_int.json"
+DBL_JSON="/opt/bigops/bigproxy/hostmon_temp/${HOST_ID}_${EXEC_TIME}_dbl.json"
+
+export CURL="curl -s --connect-timeout 3 -X POST"
+export LLD_UPDATE="${CURL} ${PROXY}/agent/discovery/updatenetif"
 
 if [[ -z "${HOST_ID}" ]] || [[ -z "${HOST_AK}" ]] || [[ -z "${CLIENT_IP}" ]] || [[ -z "${EXEC_TIME}" ]];then
     echo "HOST_ID、HOST_AK、CLIENT_IP、EXEC_TIME有一项为空"
     exit
 fi
 
->${TEMP_DIR}/int.json
->${TEMP_DIR}/dbl.json
+MULTIPLIE=1
 
 send () {
-#例子：send -k "in_rate" -v "${VALUE1}" -l "${LLD_VALUE}"
-echo "执行的send命令"
-echo "send $@"
-if [[ "$1" == "-k" ]] && [[ "$3" == "-v" ]] && [[ ! -z "$(echo "$4"|grep -E '^[0-9\.e\+]+$')" ]] && [[ "$5" == "" ]] ;then
-  VALUE="$(echo "$4"|awk '{printf("%.2f\n",$NF)}')"
-  if [ ! -z "$(echo "$2"|grep -E '^(icmpping_status|tcpping_status|udpping_status|proc_total|proc_running|proc_zombie|tcp_total|tcp_estab|tcp_synrecv|tcp_timewait|disk_fs_max_usage|disk_inode_max_usage)')" ];then
-    VALUE="$(echo "$4"|awk '{printf("%d\n",$NF)}')"
-    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"value\": ${VALUE}}" >>${TEMP_DIR}/int.json
-  elif [ ! -z "$(echo "$2"|grep -E '^(icmpping_latency|icmpping_loss|tcpping_latency|udpping_latency|cpu_usage|mem_usage)')" ];then
-    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"value\": ${VALUE}}" >>${TEMP_DIR}/dbl.json    
+#例子：send -k in_rate -d "${VALUE1}" -l "${LLD_VALUE}"
+echo "send命令：send $@"
+
+if [[ "$1" == "-k" ]] && [[ "$3" == "-d" ]] && [[ ! -z "$(echo "$4"|grep -E '^[0-9\.e\+]+$')" ]] && [[ "$5" == "" ]];then
+  if [[ "${DATA_TYPE}" == 1 ]] && [[ "${STORE_TYPE}" == 1 ]];then
+    echo "整数原值：DATA_TYPE=${DATA_TYPE},STORE_TYPE=${STORE_TYPE}"
+    VALUE="$(echo "$4"|awk '{printf("%d\n",$NF*'"${MULTIPLIE}"')}')"
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"value\": ${VALUE}}" >>${INT_JSON}
+  elif [[ "${DATA_TYPE}" == 2 ]] && [[ "${STORE_TYPE}" == 1 ]];then
+    echo "浮点原值：DATA_TYPE=${DATA_TYPE},STORE_TYPE=${STORE_TYPE}"
+    VALUE="$(echo "$4"|awk '{printf("%.2f\n",$NF*'"${MULTIPLIE}"')}')"
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"value\": ${VALUE}}" >>${DBL_JSON}    
   else
+    if [ "${DATA_TYPE}" == 1 ];then
+      VALUE="$(echo "$4"|awk '{printf("%d\n",$NF)}')"
+    elif [ "${DATA_TYPE}" == 2 ];then
+      VALUE="$(echo "$4"|awk '{printf("%.2f\n",$NF)}')"
+    fi
+    echo "差值或每秒差值：DATA_TYPE=${DATA_TYPE},STORE_TYPE=${STORE_TYPE}"
     echo "${CURL} ${PROXY}/agent/mon/host -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=$2&value=${VALUE}\""
     ${CURL} ${PROXY}/agent/mon/host -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=$2&value=${VALUE}"
   fi
-elif [[ "$1" == "-k" ]] && [[ "$3" == "-v" ]] && [[ ! -z "$(echo "$4"|grep -E '^[0-9\.e\+]+$')" ]] && [[ "$5" == "-l" ]] && [[ "$6" != "" ]] && [[ "$7" == "" ]];then
-  VALUE="$(echo "$4"|awk '{printf("%.2f\n",$NF)}')"
-  if [ ! -z "$(echo "$2"|grep -E '^(disk_fs_usage|disk_inode_usage)')" ];then
-    VALUE="$(echo "$4"|awk '{printf("%d\n",$NF)}')"
-    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"lld_value\": \"$6\",\"value\": ${VALUE}}" >>${TEMP_DIR}/int.json
-  elif [ ! -z "$(echo "$2"|grep -E '^(xxxxxx|xxxxxx)')" ];then
-    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"lld_value\": \"$6\",\"value\": ${VALUE}}" >>${TEMP_DIR}/dbl.json    
+elif [[ "$1" == "-k" ]] && [[ "$3" == "-d" ]] && [[ ! -z "$(echo "$4"|grep -E '^[0-9\.e\+]+$')" ]] && [[ "$5" == "-l" ]] && [[ "$6" != "" ]] && [[ "$7" == "" ]];then
+  if [[ "${DATA_TYPE}" == 1 ]] && [[ "${STORE_TYPE}" == 1 ]];then
+    echo "整数原值：DATA_TYPE=${DATA_TYPE},STORE_TYPE=${STORE_TYPE}"
+    VALUE="$(echo "$4"|awk '{printf("%d\n",$NF*'"${MULTIPLIE}"')}')"
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"lld_value\": \"$6\",\"value\": ${VALUE}}" >>${INT_JSON}
+  elif [[ "${DATA_TYPE}" == 2 ]] && [[ "${STORE_TYPE}" == 1 ]];then
+    echo "浮点原值：DATA_TYPE=${DATA_TYPE},STORE_TYPE=${STORE_TYPE}"
+    VALUE="$(echo "$4"|awk '{printf("%.2f\n",$NF*'"${MULTIPLIE}"')}')"
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"lld_value\": \"$6\",\"value\": ${VALUE}}" >>${DBL_JSON}      
   else
+    if [ "${DATA_TYPE}" == 1 ];then
+      VALUE="$(echo "$4"|awk '{printf("%d\n",$NF)}')"
+    elif [ "${DATA_TYPE}" == 2 ];then
+      VALUE="$(echo "$4"|awk '{printf("%.2f\n",$NF)}')"
+    fi
+    echo "差值或每秒差值：DATA_TYPE=${DATA_TYPE},STORE_TYPE=${STORE_TYPE}"
     echo "${CURL} ${PROXY}/agent/mon/host -d \"id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=$2&lld_value=$6&value=${VALUE}\""
     ${CURL} ${PROXY}/agent/mon/host -d "id=${HOST_ID}&ak=${HOST_AK}&exec_time=${EXEC_TIME}&key=$2&lld_value=$6&value=${VALUE}"
   fi
@@ -58,25 +76,50 @@ fi
 echo
 }
 
-export -f send
-
 send_lld () {
-#例子：send_lld -k "linux_disk" -v "${lld_value}"
-echo "执行的send_lld命令"
-echo "send_lld $@"
-if [[ "$1" == "-k" ]] && [[ "$3" == "-v" ]] && [[ "$5" == "" ]] ;then
+#例子：send_lld -k "linux_disk" -d "${lld_value}"
+echo "send_lld命令：send_lld $@"
+
+if [[ "$1" == "-k" ]] && [[ "$3" == "-d" ]] && [[ "$5" == "" ]] ;then
   echo "${CURL} ${PROXY}/agent/discovery/host -d \"id=${HOST_ID}&ak=${HOST_AK}&lld_key=$2&lld_value=${4}\""
   ${CURL} ${PROXY}/agent/discovery/host -d "id=${HOST_ID}&ak=${HOST_AK}&lld_key=$2&lld_value=${4}"
 else
   echo -e "\n--------send_lld参数错误--------"
   echo "$@"
 fi
+echo
 }
 
-export -f send_lld
+update_netif_status () {
+#例子：update_netif_status -i 10001 -d 1
+echo "update_netif_status命令：update_netif_status $@"
+
+if [[ "$1" == "-i" ]] && [[ "$3" == "-d" ]] && [[ "$5" == "" ]];then
+  echo "${LLD_UPDATE} -d \"id=${HOST_ID}&ak=${HOST_AK}&lld_key=ifDescr&lld_index=${2}&netif_key=netif_status&netif_value=${4}\""
+  ${LLD_UPDATE} -d "id=${HOST_ID}&ak=${HOST_AK}&lld_key=ifDescr&lld_index=${2}&netif_key=netif_status&netif_value=${4}"
+else
+  echo -e "\n--------update_netif_status参数错误--------"
+  echo "$@"
+fi
+echo
+}
+
+update_netif_alias () {
+#例子：send_lld -k ifDescr -d 10002|FastEthernet0/2
+echo "update_netif_alias命令：update_netif_alias $@"
+
+if [[ "$1" == "-i" ]] && [[ "$3" == "-d" ]] && [[ "$5" == "" ]];then
+  echo "${LLD_UPDATE} -d \"id=${HOST_ID}&ak=${HOST_AK}&lld_key=ifDescr&lld_index=${2}&netif_key=netif_alias&netif_value=${4}\""
+  ${LLD_UPDATE} -d "id=${HOST_ID}&ak=${HOST_AK}&lld_key=ifDescr=ifDescr&lld_index=${2}&netif_key=netif_alias&netif_value=${4}"
+else
+  echo -e "\n--------update_netif_alias参数错误--------"
+  echo "$@"
+fi
+echo
+}
 
 echo "EXEC_TIME：$(date -d @${EXEC_TIME} "+%Y-%m-%d %H:%M:%S")"
-echo "START_TIME：$(date "+%Y-%m-%d %H:%M:%S")"
+START_TIME="$(date "+%Y-%m-%d %H:%M:%S")"
 echo "proxy_id：${proxy_id}"
 echo "proxy_name：${proxy_name}"
 echo "/opt/bigops/bigproxy/hostmon.sh '$@'"
@@ -89,8 +132,7 @@ if [ $? -ne 0 ];then
   exit
 fi
 
-echo -e "\n第一列更新方式、第二列KEY、第三列间隔、第四列自动发现、第五列模板ID、第六列端点"
-#例子：1||mem_usage,cpu_usage||1||none||11||http://172.31.173.25:9100/metrics
+echo -e "\n第1列更新方式、第2列KEY、第3列间隔、第4列自动发现、第5列返回值类型、第6列存储类型、第7列定制倍数、第8列模板ID、第9列端点"
 #echo -e "更新方式：0简单Ping、1Exporter、2Ansible、3SNMP、4IPMI、9自定义。"
 
 ITEM="$(echo "${ITEM}"|sed '/^[ \t]*$/d')"
@@ -114,15 +156,19 @@ if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|icmpping_status\|\|')" ];then
     ICMPPING_LATENCY="$(echo "${ICMPPING}"|awk '/xmt/{print $NF}'|awk -F/ '{print $2}')"
     echo -e "--------处理icmpping监控项--------"
     if [[ ! -z "${ICMPPING_LOSS}" ]] && [[ "${ICMPPING_LOSS}" -ne 100 ]];then
-      send -k icmpping_status -v 1
+      STORE_TYPE=1 && DATA_TYPE=1
+      send -k icmpping_status -d 1
       if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|icmpping_latency\|\|')" ];then
-        send -k icmpping_latency -v ${ICMPPING_LATENCY}
+        STORE_TYPE=1 && DATA_TYPE=2
+        send -k icmpping_latency -d "${ICMPPING_LATENCY}"
       fi
-    else 
-      send -k icmpping_status -v 0
+    else
+      STORE_TYPE=1 && DATA_TYPE=1
+      send -k icmpping_status -d 0
     fi
     if [ ! -z "$(echo "${ITEM}"|grep -E '^0\|\|icmpping_loss\|\|')" ];then
-      send -k icmpping_loss -v ${ICMPPING_LOSS}
+      STORE_TYPE=1 && DATA_TYPE=2
+      send -k icmpping_loss -d "${ICMPPING_LOSS}"
     fi
     if [ "${ICMPPING_LOSS}" -eq 100 ];then
       echo "丢包率等于100%，退出采集！"
@@ -144,13 +190,16 @@ do
     if [ $((${CUR_SEC} % ${INTERVAL})) -eq 0 ];then
       TCPPING="$(/usr/bin/nmap -n -P0 -sT --host-timeout=5000ms -p${TCPPING_PORT} ${CLIENT_IP} 2>&1)"
       if [ ! -z "$(echo "${TCPPING}"|grep -E '/tcp open ')" ];then
-        send -k tcpping_status[${TCPPING_PORT}] -v 1
+        STORE_TYPE=1 && DATA_TYPE=1
+        send -k tcpping_status[${TCPPING_PORT}] -d 1
         TCPPING_LATENCY=$(echo "${TCPPING}"|awk '/latency/{print $4}'|sed 's/[s|(]//g')
         if [ ! -z "$(echo "${ITEM}"|grep -E "tcpping_latency\[${TCPPING_PORT}\]")" ];then
-          send -k tcpping_latency[${TCPPING_PORT}] -v ${TCPPING_LATENCY}
+          STORE_TYPE=1 && DATA_TYPE=2
+          send -k tcpping_latency[${TCPPING_PORT}] -d "${TCPPING_LATENCY}"
         fi
       else
-        send -k tcpping_status[${TCPPING_PORT}] -v 0
+        STORE_TYPE=1 && DATA_TYPE=1
+        send -k tcpping_status[${TCPPING_PORT}] -d 0
       fi
     fi
   done
@@ -169,13 +218,16 @@ do
     if [ $((${CUR_SEC} % ${INTERVAL})) -eq 0 ];then
       UDPPING="$(/usr/bin/nmap -n -P0 -sU --host-timeout=5000ms -p${UDPPING_PORT} ${CLIENT_IP} 2>&1)"
       if [ ! -z "$(echo "${UDPPING}"|grep -E '/udp open ')" ];then
-        send -k udpping_status[${UDPPING_PORT}] -v 1
+        STORE_TYPE=1 && DATA_TYPE=1
+        send -k udpping_status[${UDPPING_PORT}] -d 1
         UDPPING_LATENCY=$(echo "${UDPPING}"|awk '/latency/{print $4}'|sed 's/[s|(]//g')
         if [ ! -z "$(echo "${ITEM}"|grep -E "udpping_latency\[${UDPPING_PORT}\]")" ];then
-          send -k udpping_lateny[${UDPPING_PORT}] -v ${UDPPING_LATENCY}
+          STORE_TYPE=1 && DATA_TYPE=2
+          send -k udpping_lateny[${UDPPING_PORT}] -d "${UDPPING_LATENCY}"
         fi
       else
-        send -k udpping_status[${UDPPING_PORT}] -v 0
+        STORE_TYPE=1 && DATA_TYPE=1
+        send -k udpping_status[${UDPPING_PORT}] -d 0
       fi
     fi
   done
@@ -192,7 +244,7 @@ if [ ! -z "$(echo "${ITEM}"|grep -E '^2\|\|')" ];then
   else
     echo -e "\n--------Anbile命令--------"
     echo "ANSIBLE_CMD=\"ansible -i ${ANSIBLE_HOSTS} all\""
-    export ANSIBLE_CMD="ansible -i ${ANSIBLE_HOSTS} all"
+    ANSIBLE_CMD="ansible -i ${ANSIBLE_HOSTS} all"
   fi
 fi
 
@@ -211,22 +263,22 @@ if [ ! -z "$(echo "${ITEM}"|grep -E '^3\|\|')" ];then
   snmp_privacy_pass=$(echo ${HOST_SNMP}|awk -F'[|][|]' '{print $9}')
 
   if [ "${snmp_proto}" == 'snmpv1' ];then
-      export SNMP_CMD="snmpwalk -v 1 -c ""${snmp_community}"" ""${CLIENT_IP}"
+      SNMP_CMD="snmpwalk -v 1 -c ""${snmp_community}"" ""${CLIENT_IP}"
   fi
 
   if [ "${snmp_proto}" == 'snmpv2' ];then
-      export SNMP_CMD="snmpwalk -v 2c -c ""${snmp_community}"" ""${CLIENT_IP}"
+      SNMP_CMD="snmpwalk -v 2c -c ""${snmp_community}"" ""${CLIENT_IP}"
   fi
 
   if [ "${snmp_proto}" == 'snmpv3' ];then
       if [ "${snmp_security_level}" == 'noAuthNoPriv' ];then
-          export SNMP_CMD="snmpwalk -v 3 -l noAuthNoPriv -u ""${snmp_user}"" ""${CLIENT_IP}"
+        SNMP_CMD="snmpwalk -v 3 -l noAuthNoPriv -u ""${snmp_user}"" ""${CLIENT_IP}"
       fi  
       if [ "${snmp_security_level}" == 'authNoPriv' ];then
-          export SNMP_CMD="snmpwalk -v 3 -l authNoPriv -u ""${snmp_user}"" -A ""${snmp_auth_protocol}"" -a '""${snmp_auth_pass}""' ""${CLIENT_IP}"
+        SNMP_CMD="snmpwalk -v 3 -l authNoPriv -u ""${snmp_user}"" -A ""${snmp_auth_protocol}"" -a '""${snmp_auth_pass}""' ""${CLIENT_IP}"
       fi  
       if [ "${snmp_security_level}" == 'authPriv' ];then
-          export SNMP_CMD="snmpwalk -v 3 -l authPriv -u ""${snmp_user}"" -A ""${snmp_auth_protocol}"" -a '""${snmp_auth_pass}""' -X ""${snmp_privacy_protocol}"" -x '""${snmp_privacy_pass}"" ""${CLIENT_IP}"
+        SNMP_CMD="snmpwalk -v 3 -l authPriv -u ""${snmp_user}"" -A ""${snmp_auth_protocol}"" -a '""${snmp_auth_pass}""' -X ""${snmp_privacy_protocol}"" -x '""${snmp_privacy_pass}"" ""${CLIENT_IP}"
       fi    
   fi
 
@@ -250,7 +302,7 @@ if [ ! -z "$(echo "${ITEM}"|grep -E '^4\|\|')" ];then
   if [[ ! -z "${ipmi_ip}" ]] && [[ ! -z "${ipmi_user}" ]] && [[ ! -z "${ipmi_pass}" ]];then
     echo -e "\n\n--------IPMI命令--------"
     echo "IPMI_CMD="ipmitool -I lan -H ${IPMI_HOST} -U ${IPMI_USER} -P ${IPMI_PASS}""
-    export IPMI_CMD="ipmitool -I lan -H ${IPMI_HOST} -U ${IPMI_USER} -P ${IPMI_PASS}"
+    IPMI_CMD="ipmitool -I lan -H ${IPMI_HOST} -U ${IPMI_USER} -P ${IPMI_PASS}"
     echo -e "\n\n--------IPMI命令--------"
     echo "${IPMI_CMD}"
   fi
@@ -263,12 +315,15 @@ do
   KEY="$(echo "${item_line}"|awk -F'[|][|]' '{print $2}')"
   INTERVAL="$(echo "${item_line}"|awk -F'[|][|]' '{print $3}')"
   LLD_KEY="$(echo "${item_line}"|awk -F'[|][|]' '{print $4}')"
+  DATA_TYPE="$(echo "${item_line}"|awk -F'[|][|]' '{print $5}')"
+  STORE_TYPE="$(echo "${item_line}"|awk -F'[|][|]' '{print $6}')"
+  MULTIPLIE="$(echo "${item_line}"|awk -F'[|][|]' '{print $7}')"
   TEMPALTE_ID="$(echo "${item_line}"|awk -F'[|][|]' '{print $8}')"
   ENDPOINT="$(echo "${item_line}"|awk -F'[|][|]' '{print $9}')"
 
   #如果更新模式是exporter，获取metrics内容
   if [ ! -z "$(echo "${item_line}"|grep ^1)" ];then
-    export METRICS="$(curl --compressed -q --connect-timeout 15 "${ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
+    METRICS="$(curl --compressed -q --connect-timeout 3 "${ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
     if [ $? -ne 0 ];then
       echo "连接错误，请检查 curl --compressed -q ${ENDPOINT}"
       continue
@@ -280,14 +335,15 @@ do
   ${CURL} ${PROXY}/agent/mon/shell -d "id=${HOST_ID}&ak=${HOST_AK}&mon_template_id=${TEMPALTE_ID}" 2>&1 >"${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh"
 
   if [[ ! -z "$(echo "${LLD_KEY}"|grep 'none')" ]] && [[ $((${CUR_SEC} % ${INTERVAL})) -eq 0 ]];then
-    echo "export ANSIBLE_CMD=\"${ANSIBLE_CMD}\""
-    echo "export SNMP_CMD=\"${SNMP_CMD}\""
-    echo "export IPMI_CMD=\"${IPMI_CMD}\""
     echo -e "\n--------查看${KEY}的Shell内容--------"
     cat ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh
-    shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh 2>&1)"
-    echo -e "\n--------执行${KEY}的Shell结果--------"
-    echo "${shell_result}"
+    if [ -z "$(/bin/bash -n "${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh")" ];then
+      shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh 2>&1)"
+      echo -e "\n\n--------执行${KEY}的Shell结果--------"
+      echo "${shell_result}"
+    else
+      echo "监控项Shell语法错误！"
+    fi
   fi
 
   if [[ -z "$(echo "${LLD_KEY}"|grep 'none')" ]] && [[ $((${CUR_SEC} % ${INTERVAL})) -eq 0 ]];then
@@ -302,15 +358,18 @@ do
     #循环发现项
     echo "${LLD_VALUE_LIST}"|while read lld_value_line
     do
-      export LLD_VALUE="${lld_value_line}"
-      echo "export ANSIBLE_CMD=\"${ANSIBLE_CMD}\""
-      echo "export SNMP_CMD=\"${SNMP_CMD}\""
-      echo "export IPMI_CMD=\"${IPMI_CMD}\""
+      LLD_INDEX=$(echo "${lld_value_line}"|awk -F',' '{print $2}')
+      LLD_VALUE=$(echo "${lld_value_line}"|awk -F',' '{print $1}')
+
       echo -e "\n--------查看${KEY}，${LLD_VALUE}的Shell内容--------"
       cat ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh
-      shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh 2>&1)"
-      echo -e "\n--------执行${KEY}，${LLD_VALUE}的Shell结果--------"
-      echo "${shell_result}"
+      if [ -z "$(/bin/bash -n "${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh")" ];then
+        shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh 2>&1)"
+        echo -e "\n--------执行${KEY}，${LLD_VALUE}的Shell结果--------"
+        echo "${shell_result}"
+      else
+        echo "发现项Shell语法错误！"
+      fi
     done
   fi
 done
@@ -330,15 +389,15 @@ if [ ! -z "${LLD_LIST}" ];then
   echo -e "--------循环处理LLD--------"
   echo "${LLD_LIST}"|sort|uniq|while read lld_line
   do
-    export LLD_MODE="$(echo "${lld_line}"|awk -F'[|][|]' '{print $1}')"
-    export LLD_KEY="$(echo "${lld_line}"|awk -F'[|][|]' '{print $2}')"
-    export LLD_INTERVAL="$(echo "${lld_line}"|awk -F'[|][|]' '{print $3}')"
-    export LLD_ENDPOINT="$(echo "${lld_line}"|awk -F'[|][|]' '{print $4}')"
+    LLD_MODE="$(echo "${lld_line}"|awk -F'[|][|]' '{print $1}')"
+    LLD_KEY="$(echo "${lld_line}"|awk -F'[|][|]' '{print $2}')"
+    LLD_INTERVAL="$(echo "${lld_line}"|awk -F'[|][|]' '{print $3}')"
+    LLD_ENDPOINT="$(echo "${lld_line}"|awk -F'[|][|]' '{print $4}')"
 
     #如果发现模式是exporter，获取endpoint内容
     if [ ! -z "$(echo "${LLD_MODE}"|grep ^1)" ];then
-      echo -e "curl --compressed -q --connect-timeout 15 \"${LLD_ENDPOINT}\""
-	    export LLD_METRICS="$(curl --compressed -q --connect-timeout 15 "${LLD_ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
+      echo -e "curl --compressed -q --connect-timeout 3 \"${LLD_ENDPOINT}\""
+	    METRICS="$(curl --compressed -q --connect-timeout 3 "${LLD_ENDPOINT}" 2>/dev/null|grep -Ev '^[ \t#]*$')"
       if [ $? -ne 0 ];then
          echo "连接错误，请检查 curl --compressed -q ${LLD_ENDPOINT}"
          continue
@@ -350,9 +409,6 @@ if [ ! -z "${LLD_LIST}" ];then
     ${CURL} ${PROXY}/agent/template/host/lld/shell -d "id=${HOST_ID}&ak=${HOST_AK}&id=${HOST_ID}&lld_key=${LLD_KEY}" 2>&1 >"${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh"
 
     if [ $((${CUR_SEC} % ${LLD_INTERVAL})) -eq 0 ];then
-      echo "export ANSIBLE_CMD=\"${ANSIBLE_CMD}\""
-      echo "export SNMP_CMD=\"${SNMP_CMD}\""
-      echo "export IPMI_CMD=\"${IPMI_CMD}\""
       echo -e "\n--------查看${lld_line}的Shell内容--------"
       cat "${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh"
       shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh 2>&1)"
@@ -362,20 +418,24 @@ if [ ! -z "${LLD_LIST}" ];then
   done
 fi
 
+es_ip="$(echo "${es_ip}"|awk -F, '{print $1}')"
+
 echo -e "\n-----------提交INT数据--------------"
-cat "${TEMP_DIR}/int.json"
-if [ -s "${TEMP_DIR}/int.json" ];then
-  echo "curl -s -XPOST -u${es_user}:${es_pass} -H \"Content-Type: application/json\" http://${es_ip}:${es_port}/monitor-history-int-${ES_TIME}/_doc/_bulk --data-binary @${TEMP_DIR}/int.json"
-  curl -s -XPOST -u${es_user}:${es_pass} -H "Content-Type: application/json" http://${es_ip}:${es_port}/monitor-history-int-${ES_TIME}/_doc/_bulk --data-binary @${TEMP_DIR}/int.json
+cat "${INT_JSON}"
+if [ -s "${INT_JSON}" ];then
+  echo "curl -s -XPOST -u${es_user}:${es_pass} -H \"Content-Type: application/json\" http://${es_ip}:${es_port}/monitor-history-int-${ES_TIME}/_doc/_bulk --data-binary @${INT_JSON}"
+  curl -s -XPOST -u${es_user}:${es_pass} -H "Content-Type: application/json" http://${es_ip}:${es_port}/monitor-history-int-${ES_TIME}/_doc/_bulk --data-binary @${INT_JSON}
 fi
 
 echo -e "\n\n-----------提交DBL数据--------------"
-
-cat "${TEMP_DIR}/dbl.json"
-if [ -s "${TEMP_DIR}/dbl.json" ];then
-  echo "curl -s -XPOST -u${es_user}:${es_pass} -H \"Content-Type: application/json\" http://${es_ip}:${es_port}/monitor-history-dbl-${ES_TIME}/_doc/_bulk --data-binary @${TEMP_DIR}/dbl.json"
-  curl -s -XPOST -u${es_user}:${es_pass} -H "Content-Type: application/json" http://${es_ip}:${es_port}/monitor-history-dbl-${ES_TIME}/_doc/_bulk --data-binary @${TEMP_DIR}/dbl.json
+cat "${DBL_JSON}"
+if [ -s "${DBL_JSON}" ];then
+  echo "curl -s -XPOST -u${es_user}:${es_pass} -H \"Content-Type: application/json\" http://${es_ip}:${es_port}/monitor-history-dbl-${ES_TIME}/_doc/_bulk --data-binary @${DBL_JSON}"
+  curl -s -XPOST -u${es_user}:${es_pass} -H "Content-Type: application/json" http://${es_ip}:${es_port}/monitor-history-dbl-${ES_TIME}/_doc/_bulk --data-binary @${DBL_JSON}
 fi
 
-echo -e "\n\nEND_TIME：$(date "+%Y-%m-%d %H:%M:%S")"
+rm -f ${INT_JSON} ${DBL_JSON}
+
+echo -e "\n\nSTART_TIME：${START_TIME}"
+echo "END_TIME：$(date "+%Y-%m-%d %H:%M:%S")"
 

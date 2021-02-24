@@ -8,7 +8,7 @@ cpu_cores=$(grep -i '^core id' /proc/cpuinfo|sort|uniq|wc -l)
 vcpus=$(grep -i '^processor' /proc/cpuinfo|sort|uniq|wc -l)
 mem_total=$(free -k|grep -i mem|awk '{print $2/1024}')
 disk_total=$(df -k|grep '^/'|awk 'NF>1{print $2}'|awk -v total=0 '{total+=$1}END{print total/1024}')
-virt_type=$(timeout 5 sudo virt-what)
+virt_type=$(sudo virt-what)
 architecture=$(arch)
 kernel=$(uname -r)
 distribution=$(lsb_release -a|grep 'Distributor ID'|awk '{print $NF}')
@@ -16,11 +16,11 @@ distribution_version=$(lsb_release -a|grep 'Release'|awk '{print $NF}'|awk -F. '
 distribution_major_version=$(echo ${distribution_version}|awk -F. '{print $1}')
 lan_ip=$(/usr/sbin/ip a|grep 'inet.*brd'|grep -Ev '(veth|docker|tap|virbr)'|awk '{print $2}'|awk -F/ '{print $1}'|grep -E '^(192|172|10|18)\.'|uniq|sort)
 wan_ip=$(/usr/sbin/ip a|grep 'inet.*brd'|grep -Ev '(veth|docker|tap|virbr)'|awk '{print $2}'|awk -F/ '{print $1}'|grep -Ev '^(192|172|10|18|[a-z]|:)'|uniq|sort)
-product_vendor=$(timeout 5 sudo dmidecode -s system-manufacturer|sed 's#[A-Z]#\l&#g'|sed 's/ .*//g')
-product_name=$(timeout 5 sudo dmidecode -s system-product-name)
-product_serial=$(timeout 5 sudo dmidecode -s system-serial-number)
+product_vendor=$(sudo dmidecode -s system-manufacturer|sed 's#[A-Z]#\l&#g'|sed 's/ .*//g')
+product_name=$(sudo dmidecode -s system-product-name)
+product_serial=$(sudo dmidecode -s system-serial-number)
 
-HEIGHT=$(timeout 5 sudo dmidecode -s system-product-name)
+HEIGHT=$(sudo dmidecode -s system-product-name)
 if [ ! -z "$(echo "${HEIGHT}"|grep -E 'PowerEdge (18|19|R41|R61)')" ];then
   height=1
 fi
@@ -105,7 +105,7 @@ if [ ! -z "{NIC}" ];then
 fi
 
 
-if [ -z "$(timeout 5 sudo virt-what)" ];then
+if [ -z "$(sudo virt-what)" ];then
 
   #厂商型号
   if [[ ! -z "${product_vendor}" ]] && [[ ! -z "${product_name}" ]] && [[ -z "${virt_type}" ]];then
@@ -115,9 +115,9 @@ if [ -z "$(timeout 5 sudo virt-what)" ];then
 
   #ipmi
   if hash ipmitool 2>/dev/null; then
-    ipmi=$(timeout 5 sudo ipmitool mc info 2>/dev/null)
+    ipmi=$(sudo ipmitool mc info 2>/dev/null)
     if [ ! -z "${ipmi}" ];then
-      ipmi_lan=$(timeout 5 sudo ipmitool lan print 1)
+      ipmi_lan=$(sudo ipmitool lan print 1)
       ipmi_ip=$(echo "${ipmi_lan}"|grep -E 'IP Address'|awk '{print $NF}'|grep -E ^[0-9])
       ${CURL} ${proxy}/agent/hostipmi -d "id=${host_id}&ak=${host_ak}&ip=${ipmi_ip}"
       echo -e "\n\n"
@@ -125,7 +125,7 @@ if [ -z "$(timeout 5 sudo virt-what)" ];then
   fi
 
 #配置详情，内存信息
-MEM=$(timeout 5 sudo dmidecode -t 17 |awk '/Memory Device/,0'|awk -F":[ ]" '\
+MEM=$(sudo dmidecode -t 17 |awk '/Memory Device/,0'|awk -F":[ ]" '\
 {if ($1 ~ /^\tSize$/) printf("%s||",$2)};\
 {if ($1 ~ /^\tLocator$/) printf("%s||",$2)};\
 {if ($1 ~ /^\tType$/) printf("%s||",$2)};\
@@ -170,7 +170,7 @@ MEM=$(timeout 5 sudo dmidecode -t 17 |awk '/Memory Device/,0'|awk -F":[ ]" '\
 
 #配置详情，CPU，格式：socket||model||core_count||ht
 
-CPU=$(timeout 5 sudo dmidecode -t processor | awk -F":[ ]" '\
+CPU=$(sudo dmidecode -t processor | awk -F":[ ]" '\
 {if ($1 ~ /^\tSocket Designation$/) printf("%s||",$2)};\
 {if ($1 ~ /^\tVersion$/) printf("%s||",$2)};\
 {if ($1 ~ /^\tCore Count$/) printf("%s\n",$2)};' \
@@ -193,7 +193,7 @@ fi
 
 
 #配置详情，虚拟盘
-LDISK=$(timeout 5 sudo fdisk -l|grep '/dev'|grep -E '(bytes|字节)'|awk -F'：|:' '{print $1,$2}'|awk '{print $2"||"$3,$4}'|sed 's/,$//')
+LDISK=$(sudo fdisk -l|grep '/dev'|grep -E '(bytes|字节)'|awk -F'：|:' '{print $1,$2}'|awk '{print $2"||"$3,$4}'|sed 's/,$//')
 
 if [[ $? == 0 ]] && [[ ! -z "${LDISK}" ]];then
 	${CURL} ${proxy}/agent/hostldisk -d "id=${host_id}&ak=${host_ak}" --data-urlencode "ldisk=${LDISK}"
@@ -202,10 +202,10 @@ fi
 
 
 #配置详情，物理盘，格式：model||sn||size||rr||inch||interface||speed
-if [[ ! -z "${LDISK}" ]] && [[ -z "$(timeout 5 sudo virt-what)" ]];then
+if [[ ! -z "${LDISK}" ]] && [[ -z "$(sudo virt-what)" ]];then
   ALL_PDISK=$(echo "${LDISK}"|awk -F'[|][|]' '{print $1}'|grep -Ev '/dev/mapper'|while read ldisk
   do
-    PDISK=$(timeout 5 sudo smartctl -a "${ldisk}")
+    PDISK=$(sudo smartctl -a "${ldisk}")
     if [ ! -z "$(echo "${PDISK}"|grep -E 'User Capacity')" ];then
       VENDOR=$(echo "${PDISK}"|awk -F: '/^Vendor/{print $2}'|sed 's/^[ ]*//g')
       PRODUCT=$(echo "${PDISK}"|awk -F: '/^Product/{print $2}'|sed 's/^[ ]*//g')
@@ -231,8 +231,8 @@ if [[ ! -z "${LDISK}" ]] && [[ -z "$(timeout 5 sudo virt-what)" ]];then
 fi
 
 #配置详情，系统信息
-if [ -z "$(timeout 5 sudo virt-what)" ];then
-  SYSTEM=$(timeout 5 sudo dmidecode -t system|awk -v FS=':' '/^\t(Manufacturer|Product Name|Serial Number):/{$1="";printf("%s||",$0)}/^$/'|sed 's/^[ ]*//g'|sed 's/||[ ]*/||/g'|sed '/^$/d')
+if [ -z "$(sudo virt-what)" ];then
+  SYSTEM=$(sudo dmidecode -t system|awk -v FS=':' '/^\t(Manufacturer|Product Name|Serial Number):/{$1="";printf("%s||",$0)}/^$/'|sed 's/^[ ]*//g'|sed 's/||[ ]*/||/g'|sed '/^$/d')
   SYSTEM=$(echo "${SYSTEM}"|awk -F'[|][|]' '{print $1"||"$3"||"$2}')
   if [[ $? == 0 ]] && [[ ! -z "${SYSTEM}" ]];then
     #echo "${CURL} ${proxy}/agent/hostsystem -d \"id=${host_id}&ak=${host_ak}\" --data-urlencode \"system=${SYSTEM}\""
@@ -241,7 +241,7 @@ if [ -z "$(timeout 5 sudo virt-what)" ];then
   fi
 
 #配置详情，RAID卡
-RAIDADP=$(timeout 5 sudo MegaCli64 -AdpAllInfo -aALL -NoLog |awk '/^Adapter/,/Delay during/' |sed 's/^Adapter/Adapter:/g'| awk -F": |" '\
+RAIDADP=$(sudo MegaCli64 -AdpAllInfo -aALL -NoLog |awk '/^Adapter/,/Delay during/' |sed 's/^Adapter/Adapter:/g'| awk -F": |" '\
 {if ($1 ~ /^Adapter/) printf("%s||",$2)};\
 {if ($1 ~ /^Product Name/) printf("%s||",$2)};\
 {if ($1 ~ /^Serial No/) printf("%s||",$2)};\
@@ -263,7 +263,7 @@ if [ ! -z "${RAIDADP}" ];then
 fi
 
 #配置详情，RAID物理盘
-RAIDPD=$(timeout 5 sudo MegaCli64 -PDList -aALL -NoLog | awk -F": " '\
+RAIDPD=$(sudo MegaCli64 -PDList -aALL -NoLog | awk -F": " '\
 {if ($1 ~ /^Enclosure Device ID/) printf("%s||",$2)};\
 {if ($1 ~ /^Slot Number/) printf("%s||",$2)};\
 {if ($1 ~ /^Media Error Count/) printf("%s||",$2)};\
@@ -284,7 +284,7 @@ if [ ! -z "${RAIDPD}" ];then
 fi
 
 #配置详情，RAID虚拟盘
-RAIDLD=$(timeout 5 sudo MegaCli64 -LDInfo -Lall -aALL -NoLog |awk '/^Adapter/,/Encryption Type/'|sed 's/^Adapter/Adapter:/g'| awk -F":|--" '\
+RAIDLD=$(sudo MegaCli64 -LDInfo -Lall -aALL -NoLog |awk '/^Adapter/,/Encryption Type/'|sed 's/^Adapter/Adapter:/g'| awk -F":|--" '\
 {if ($1 ~ /^Adapter/) printf("%s||",$2)};\
 {if ($1 ~ /^Virtual Disk/) printf("%s||",$2)};\
 {if ($1 ~ /^RAID Level/) printf("%s||",$2)};\

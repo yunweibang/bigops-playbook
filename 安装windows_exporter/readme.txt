@@ -1,6 +1,6 @@
 
 作业名称：
-安装windows_exporter
+安装windows exporter
 
 
 官网：
@@ -24,7 +24,7 @@ exe_file="windows_exporter-0.15.0-386.exe"
     
   tasks:
     - name: 关闭wmi exporter服务
-      win_shell: taskkill /f /im wmi_exporter.exe
+      win_shell: cmd.exe /c taskkill /f /im wmi_exporter.exe
       ignore_errors: yes
 
     - name: 删除wmi exporter服务
@@ -36,7 +36,11 @@ exe_file="windows_exporter-0.15.0-386.exe"
       ignore_errors: yes
 
     - name: 关闭windows_exporter服务
-      win_shell: taskkill /f /im windows_exporter.exe
+      win_shell: cmd.exe /c taskkill /f /im windows_exporter.exe
+      ignore_errors: yes
+
+    - name: 关闭windows_exporter服务
+      win_shell: cmd.exe /c net stop windows_exporter
       ignore_errors: yes
 
     - name: 创建目录
@@ -60,15 +64,15 @@ exe_file="windows_exporter-0.15.0-386.exe"
       ignore_errors: yes
       
     - name: 安装windows_exporter服务
-      win_shell: cmd.exe /c sc create windows_exporter binPath='\"{{ dest_path }}/windows_exporter.exe\" --telemetry.addr :9100 --collectors.enabled=\"cpu,cs,logical_disk,net,os,process,service,tcp,system,textfile\" --collector.textfile.directory \"{{ dest_path }}/key/\"' start=auto
+      win_shell: cmd.exe /c sc create windows_exporter binPath='\"{{ dest_path }}/windows_exporter.exe\" --telemetry.addr :9100 --collectors.enabled=\"cpu,cs,logical_disk,net,os,process,tcp,system,textfile\" --collector.textfile.directory \"{{ dest_path }}/key/\"' start=auto
       ignore_errors: yes
-    
-    - name: 启动windows_exporter服务
-      win_shell: net start windows_exporter
       
     - name: 创建系统脚本计划任务
       win_shell: cmd.exe /c schtasks /create /F /sc minute /mo 1 /NP /RL HIGHEST /tn windows_exporter /tr 'PowerShell.exe -file \"{{ dest_path }}/key/syskey.ps1\"'
       ignore_errors: yes
+
+    - name: 启动windows_exporter服务
+      win_shell: cmd.exe /c net start windows_exporter
 
 
 

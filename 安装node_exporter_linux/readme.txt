@@ -1,6 +1,6 @@
 
 作业名称：
-安装node_exporter_linux
+安装node exporter
 
 
 官网地址：
@@ -13,10 +13,7 @@ https://github.com/prometheus/node_exporter/
 3：node_exporter.init
 4：node_exporter.sh
 5：syskey.sh
-6：userkey.sh
-7：lsb_release
-8：mpstat
-9：MegaCli
+6：mpstat
 
 
 
