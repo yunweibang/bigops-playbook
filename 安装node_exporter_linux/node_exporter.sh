@@ -11,6 +11,14 @@ cd /opt/exporter/
 tar zxvf node_exporter-1.1.0.linux-amd64.tar.gz
 cp -f node_exporter-1.1.0.linux-amd64/node_exporter /opt/exporter/
 
+sudo chmod 777 /opt/exporter/mpstat 
+
+if [[ -f "/opt/exporter/mpstat" ]] && [[ ! -f "/bin/mpstat" ]];then
+    sudo cp -pf /opt/exporter/mpstat /bin/
+fi
+
+cp -f node_exporter-1.1.0.linux-amd64/node_exporter /opt/exporter/
+
 if [ ! -d /opt/exporter/key/ ];then
     mkdir /opt/exporter/key/
 fi
@@ -22,8 +30,6 @@ fi
 if [ -f "/opt/exporter/userkey.sh" ];then
     mv -f /opt/exporter/userkey.sh /opt/exporter/key/
 fi
-
-chmod 777 /opt/exporter/ss /opt/exporter/ss_c6 /opt/exporter/lsb_release /opt/exporter/mpstat
 
 chmod 777 /opt/exporter/key/* 
 

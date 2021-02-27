@@ -15,42 +15,23 @@ docker rmi bigproxy:latest >/dev/null 2>&1
 
 chmod +x /opt/bigops/bigproxy/*.sh /opt/bigops/bigproxy/*.jar
 
-if [ ! -d /opt/bigops/bigproxy/hostinfo_temp ];then
-	mkdir /opt/bigops/bigproxy/hostinfo_temp
-fi
-
-if [ ! -d /opt/bigops/bigproxy/hostmon_temp ];then
-	mkdir /opt/bigops/bigproxy/hostmon_temp
-fi
-
-if [ ! -d /opt/bigops/bigproxy/logs ];then
-	mkdir /opt/bigops/bigproxy/logs
-fi
-
-if [ ! -d /opt/bigops/bigproxy/temp ];then
-	mkdir /opt/bigops/bigproxy/temp
-fi
-
-if [ -f /opt/bigops/bigproxy/bigproxy.properties ];then
-  mv -f /opt/bigops/bigproxy/bigproxy.properties /opt/bigops/bigproxy/config/
-fi
+mkdir -p /opt/bigops/bigproxy/config >/dev/null 2>&1
+mkdir /opt/bigops/bigproxy/hosts >/dev/null 2>&1
+mkdir /opt/bigops/bigproxy/hostinfo_temp >/dev/null 2>&1
+mkdir /opt/bigops/bigproxy/hostmon_temp >/dev/null 2>&1
+mkdir /opt/bigops/bigproxy/logs >/dev/null 2>&1
+mkdir /opt/bigops/bigproxy/temp >/dev/null 2>&1
+mkdir /opt/bigops/bigproxy/config_file/ >/dev/null 2>&1
 
 if [ -f /opt/bigops/bigproxy/whitelist ];then
   mv -f /opt/bigops/bigproxy/whitelist /opt/bigops/bigproxy/config/
 fi
 
-if [ ! -z "$2" ];then
-  sed -i "s/Xms4G/Xms"$2"/g" /opt/bigops/bigproxy/start.sh
-  sed -i "s/Xmx4G/Xmx"$2"/g" /opt/bigops/bigproxy/start.sh
-else
-  echo "缺少第二个参数"
-  exit
+if [ -f /opt/bigops/bigproxy/bigproxy.properties ];then
+  mv -f /opt/bigops/bigproxy/bigproxy.properties /opt/bigops/bigproxy/config/
+  jvm_option="$(grep ^jvm_option= /opt/bigops/bigproxy/config/bigproxy.properties|awk -F= '{print $2}'|sed 's/"//g')"
+  sed -i 's/jvm_option/'"${jvm_option}"'/g' /opt/bigops/bigproxy/start.sh
 fi
-
-if [ ! -z "$1" ];then
-  sed -i "s/log_status=.*/log_status="$1"/g" /opt/bigops/bigproxy/config/bigproxy.properties
-fi
-
 
 if hash systemctl 2>/dev/null;then
   sudo cp -f /opt/bigops/bigproxy/bigproxy.service /usr/lib/systemd/system/

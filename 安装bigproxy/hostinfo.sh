@@ -19,7 +19,6 @@ export ANSIBLE_HOSTS=$(echo "$1"|sed "s/'//g"|awk -F'|' '{print $6}')
 export ANSIBLE_HOSTS="/opt/bigops/bigproxy/hosts/${HOSTS}"
 export ANSIBLE_CMD="timeout 10 ansible -i ${ANSIBLE_HOSTS} all"
 
-
 find ${TEMP_DIR} -mtime +0 -name "*" -exec rm -f {} \;
 
 if [[ -z "${HOST_ID}" ]] || [[ -z "${HOST_AK}" ]] || [[ -z "${CLIENT_IP}" ]] || [[ -z "${SYSTEM_CAT}" ]] || [[ -z "${EXEC_TIME}" ]];then
@@ -37,5 +36,5 @@ if [ ! -d "${TEMP_DIR}" ];then
 fi
 
 if [ "${SYSTEM_CAT}" == 'Windows' ];then
-   timeout 15 /bin/bash ${BASE_DIR}/hostinfo_windows.sh
+   #timeout 15 /bin/bash ${BASE_DIR}/hostinfo_windows.sh
 fi

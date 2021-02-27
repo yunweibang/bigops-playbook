@@ -1,6 +1,6 @@
 
 作业名称：
-设置rsyslog_linux
+设置rsyslog
 
 
 变量内容：
@@ -16,6 +16,14 @@ priority="notice"
   gather_facts: no
 
   tasks:
+    - name: 检查logstash_ip变量
+      shell: echo {{ logstash_ip }}
+      register: return_value
+    - debug:
+        msg: "logstash_ip变量不能为空！"
+      when: return_value.stdout  == ""
+      failed_when:  return_value.stdout  == ""
+
     - name: 授权目录
       shell: ls -l /etc/rsyslog.d
       register: list
@@ -34,5 +42,4 @@ priority="notice"
 
     - name: 发送测试信息
       shell: logger -i -t 'bigops' -p local3.error 'bigops test'
-
       

@@ -18,18 +18,14 @@
 - hosts: all
   gather_facts: no
 
-  tasks:
-    - name: 创建/opt/bigops/bigproxy/config目录
-      shell: if [ ! -d /opt/bigops/bigproxy/config ];then mkdir -p /opt/bigops/bigproxy/config;fi
-      
+  tasks:      
     - name: 上传文件到远程目录
       copy: src={{ item }} dest=/opt/bigops/bigproxy
       with_fileglob:
         - "{{ job_path }}/*"
       
     - name: 运行安装脚本
-      #第一个参数设置日志级别ERROR/INFO，第二个参数设置Xms和Xmx的大小
-      shell: /bin/bash /opt/bigops/bigproxy/install.sh "ERROR" "4G"
+      shell: /bin/bash /opt/bigops/bigproxy/install.sh
 
     - name: 检查bigproxy进程
       shell: ps -ef|grep bigproxy|grep -v grep

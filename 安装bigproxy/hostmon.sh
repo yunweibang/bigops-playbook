@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 eval $(grep -Ev '^spring_' /opt/bigops/bigproxy/config/bigproxy.properties|grep -Ev '^#')
 
 PROXY="http://127.0.0.1:60001"
@@ -35,11 +36,11 @@ if [[ "$1" == "-k" ]] && [[ "$3" == "-d" ]] && [[ ! -z "$(echo "$4"|grep -E '^[0
   if [[ "${DATA_TYPE}" == 1 ]] && [[ "${STORE_TYPE}" == 1 ]];then
     echo "整数原值：DATA_TYPE=${DATA_TYPE},STORE_TYPE=${STORE_TYPE}"
     VALUE="$(echo "$4"|awk '{printf("%d\n",$NF*'"${MULTIPLIE}"')}')"
-    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"value\": ${VALUE}}" >>${INT_JSON}
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"value\": ${VALUE}}" >>"${INT_JSON}"
   elif [[ "${DATA_TYPE}" == 2 ]] && [[ "${STORE_TYPE}" == 1 ]];then
     echo "浮点原值：DATA_TYPE=${DATA_TYPE},STORE_TYPE=${STORE_TYPE}"
     VALUE="$(echo "$4"|awk '{printf("%.2f\n",$NF*'"${MULTIPLIE}"')}')"
-    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"value\": ${VALUE}}" >>${DBL_JSON}    
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"value\": ${VALUE}}" >>"${DBL_JSON}"
   else
     if [ "${DATA_TYPE}" == 1 ];then
       VALUE="$(echo "$4"|awk '{printf("%d\n",$NF)}')"
@@ -54,11 +55,11 @@ elif [[ "$1" == "-k" ]] && [[ "$3" == "-d" ]] && [[ ! -z "$(echo "$4"|grep -E '^
   if [[ "${DATA_TYPE}" == 1 ]] && [[ "${STORE_TYPE}" == 1 ]];then
     echo "整数原值：DATA_TYPE=${DATA_TYPE},STORE_TYPE=${STORE_TYPE}"
     VALUE="$(echo "$4"|awk '{printf("%d\n",$NF*'"${MULTIPLIE}"')}')"
-    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"lld_value\": \"$6\",\"value\": ${VALUE}}" >>${INT_JSON}
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"lld_value\": \"$6\",\"value\": ${VALUE}}" >>"${INT_JSON}"
   elif [[ "${DATA_TYPE}" == 2 ]] && [[ "${STORE_TYPE}" == 1 ]];then
     echo "浮点原值：DATA_TYPE=${DATA_TYPE},STORE_TYPE=${STORE_TYPE}"
     VALUE="$(echo "$4"|awk '{printf("%.2f\n",$NF*'"${MULTIPLIE}"')}')"
-    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"lld_value\": \"$6\",\"value\": ${VALUE}}" >>${DBL_JSON}      
+    echo -e "{\"create\" : {}}\n{\"instance_id\": ${HOST_ID},\"@timestamp\": \"${TIMESTAMP}\",\"clock\": ${EXEC_TIME},\"type\": \"monhost\",\"item_key\": \"$2\",\"lld_value\": \"$6\",\"value\": ${VALUE}}" >>"${DBL_JSON}"
   else
     if [ "${DATA_TYPE}" == 1 ];then
       VALUE="$(echo "$4"|awk '{printf("%d\n",$NF)}')"
@@ -213,7 +214,7 @@ do
   echo "${KEY_LIST}"|sed 's/,/\n/g'|while read udpping_key
   do
     UDPPING_KEY="$(echo ${udpping_line}|awk -F'[' '{print $1}')"
-    UDPPING_PORT="$(echo "${udpping_line}"|awk -F'[' '{print $2}'|awk -F']' '{print $1}')"        
+    UDPPING_PORT="$(echo "${udpping_line}"|awk -F'[' '{print $2}'|awk -F']' '{print $1}')"
     echo -e "--------处理udpping监控项:${udpping_key}--------"
     if [ $((${CUR_SEC} % ${INTERVAL})) -eq 0 ];then
       UDPPING="$(/usr/bin/nmap -n -P0 -sU --host-timeout=5000ms -p${UDPPING_PORT} ${CLIENT_IP} 2>&1)"
@@ -338,7 +339,7 @@ do
     echo -e "\n--------查看${KEY}的Shell内容--------"
     cat ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh
     if [ -z "$(/bin/bash -n "${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh")" ];then
-      shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh 2>&1)"
+      shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh)"
       echo -e "\n\n--------执行${KEY}的Shell结果--------"
       echo "${shell_result}"
     else
@@ -364,7 +365,7 @@ do
       echo -e "\n--------查看${KEY}，${LLD_VALUE}的Shell内容--------"
       cat ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh
       if [ -z "$(/bin/bash -n "${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh")" ];then
-        shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh 2>&1)"
+        shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${TEMPALTE_ID}.sh)"
         echo -e "\n--------执行${KEY}，${LLD_VALUE}的Shell结果--------"
         echo "${shell_result}"
       else
@@ -411,7 +412,7 @@ if [ ! -z "${LLD_LIST}" ];then
     if [ $((${CUR_SEC} % ${LLD_INTERVAL})) -eq 0 ];then
       echo -e "\n--------查看${lld_line}的Shell内容--------"
       cat "${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh"
-      shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh 2>&1)"
+      shell_result="$(source ${TEMP_DIR}/${HOST_ID}_${LLD_KEY}.sh)"
       echo -e "\n--------执行${lld_line}的Shell结果--------"
       echo "${shell_result}"
     fi

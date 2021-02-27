@@ -31,9 +31,9 @@ fi
 
 echo
 
-echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.4.3\""
+echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.4.4\""
 echo
-${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.4.3"
+${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.4.4"
 echo -e "\n\n"
 
 if [ $? != 0 ];then
@@ -84,22 +84,34 @@ fi
 
 echo -e "\n\n"
 
-APP_LLD="$(${CURL} -s ${proxy}/agent/app/lld  -d "id=${host_id}&ak=${host_ak}")"
+APP="$(${CURL} -s ${proxy}/agent/app/lld  -d "id=${host_id}&ak=${host_ak}")"
 
-if [[ "$((${CUR_SEC} % 10))" == '0' ]] && [[ ! -z "${APP_LLD}" ]];then
-    EXPORTER_GATEWAY=$(sudo netstat -npltu|sed '1,2d'|grep -Ev '^(tcp6|udp)'|awk '{print $4,$NF}'|awk -F'[ |:|/]' '{print $2,$(NF-1)}')
-    echo "${EXPORTER_GATEWAY}"|while read i
+if [[ "$((${CUR_SEC} % 10))" == '0' ]] && [[ ! -z "${APP}" ]];then
+    NETSTAT=$(sudo netstat -npltu|sed '1,2d'|grep -Ev '^(tcp6|udp)'|awk '{print $4,$NF}'|awk -F'[ |:|/]' '{print $2,$(NF-1)}'|sort -k 2 -u)
+    echo "${NETSTAT}"|while read i
     do
-        APP_PORT=$(echo "${i}"|awk '{print $1}')
-        APP_PID=$(echo "${i}"|awk '{print $2}')
-        echo "${APP_LLD}"|while read lld
+        PORT=$(echo "${i}"|awk '{print $1}')
+        PID=$(echo "${i}"|awk '{print $2}')
+        echo "${APP}"|while read app
         do
-            APP_NAME="$(echo "${lld}"|awk -F'[\|\|]' '{print $1}')"
-            APP_KEYWORD="$(echo "${lld}"|awk -F'[\|\|]' '{print $2}')"
-            if [[ ! -z "$(grep -Ei "${APP_KEYWORD}" /proc/${APP_PID}/cmdline)" ]] && [[ ! -z "${APP_NAME}" ]] && [[ ! -z "${APP_KEYWORD}" ]];then
-                echo "${CURL} ${proxy}/agent/exportergateway -d \"id=${host_id}&ak=${host_ak}&app_name=${APP_NAME}&app_port=${APP_PORT}\""
-                ${CURL} ${proxy}/agent/exportergateway -d "id=${host_id}&ak=${host_ak}&app_name=${APP_NAME}&app_port=${APP_PORT}"
-                echo
+            echo "${app}"
+            NAME="$(echo "${app}"|awk -F'[|][|]' '{print $1}')"
+            KEYWORD="$(echo "${app}"|awk -F'[|][|]' '{print $2}')"
+            echo "${KEYWORD}"
+            if [[ -f /proc/${PID}/cmdline ]] && [[ ! -z "${KEYWORD}" ]];then
+                if [ ! -z "$(echo "${KEYWORD}"|grep -E '(mysql|mysqld)')" ];then
+                    if [ ! -z "$(cat /proc/${PID}/cmdline|grep -Ei "${KEYWORD}"|grep -Ev '(^Binary|percona|mariadb)')" ];then
+                        echo "${CURL} ${proxy}/agent/exportergateway -d \"id=${host_id}&ak=${host_ak}&app_name=${NAME}&app_port=${PORT}\""
+                        ${CURL} ${proxy}/agent/exportergateway -d "id=${host_id}&ak=${host_ak}&app_name=${NAME}&app_port=${PORT}"
+                        echo
+                    fi
+                else
+                    if [ ! -z "$(cat /proc/${PID}/cmdline|grep -Ei "${KEYWORD}")" ];then
+                        echo "${CURL} ${proxy}/agent/exportergateway -d \"id=${host_id}&ak=${host_ak}&app_name=${NAME}&app_port=${PORT}\""
+                        ${CURL} ${proxy}/agent/exportergateway -d "id=${host_id}&ak=${host_ak}&app_name=${NAME}&app_port=${PORT}"
+                        echo
+                    fi
+                fi
             fi
         done
     done
