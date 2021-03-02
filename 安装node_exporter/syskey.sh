@@ -22,9 +22,9 @@ if [ ! -z "${PROCS}" ];then
 fi
 
 if [ -f /bin/mpstat ];then
-    cpu_usage="$(sudo /bin/mpstat -P ALL 1 10|awk '$1 ~ /^Average/ && $2 ~ /all/ {print 100-$NF}'|head -n 1)"
+    cpu_usage="$(sudo /bin/mpstat -P ALL 1 20|awk '$1 ~ /^Average/ && $2 ~ /all/ {print 100-$NF}'|head -n 1)"
 elif [ /opt/exporter/mpstat ]; then
-	cpu_usage="$(sudo /opt/exporter/mpstat -P ALL 1 5|awk '$1 ~ /^Average/ && $2 ~ /all/ {print 100-$NF}'|head -n 1)"
+	cpu_usage="$(sudo /opt/exporter/mpstat -P ALL 1 20|awk '$1 ~ /^Average/ && $2 ~ /all/ {print 100-$NF}'|head -n 1)"
 fi
 
 echo "cpu_usage ${cpu_usage}" >>/opt/exporter/key/syskey.tmp

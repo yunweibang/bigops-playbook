@@ -119,7 +119,7 @@ fi
 
 echo -e "\n\n"
 
-if [ "$(date +%H%M)" == '2315' ];then
+if [ "$(date +%H%M)" == '0315' ];then
     CROND_STATUS="$(ps aux|grep -v grep|grep -E '(cron|crond)($| )')"
     if [ ! -z "${CROND_STATUS}" ];then
       CROND_STATUS=on
