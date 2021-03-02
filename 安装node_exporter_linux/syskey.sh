@@ -5,8 +5,6 @@ export PATH=/opt/bigops/bigagent/bin:/opt/exporter:/usr/bin:/bin:/usr/sbin:/sbin
 alias cp=cp
 alias rm=rm
 
-rm -f /opt/exporter/key/syskey.prom2
-rm -f /opt/exporter/key/syskey.prom.tmp
 echo >/opt/exporter/key/syskey.tmp
 
 disk_fs_max_usage="$(sudo df -k|grep ^/dev/|grep -Ev '^/dev/(sr|fb)'|grep '%'|awk '{print $5}'|sed 's/%//g'|sort -r|head -n 1)"
@@ -23,17 +21,16 @@ if [ ! -z "${PROCS}" ];then
   echo "${PROCS}"|awk '{print "proc_status{name=\""$1"\"} 1"}' >>/opt/exporter/key/syskey.tmp
 fi
 
-if [ -f "/bin/mpstat" ];then
+if [ -f /bin/mpstat ];then
     cpu_usage="$(sudo /bin/mpstat -P ALL 1 10|awk '$1 ~ /^Average/ && $2 ~ /all/ {print 100-$NF}'|head -n 1)"
-elif [[ "/opt/exporter/mpstat" ]]; then
-	cpu_usage="$(sudo /opt/exporter/mpstat -P ALL 1 10|awk '$1 ~ /^Average/ && $2 ~ /all/ {print 100-$NF}'|head -n 1)"
+elif [ /opt/exporter/mpstat ]; then
+	cpu_usage="$(sudo /opt/exporter/mpstat -P ALL 1 5|awk '$1 ~ /^Average/ && $2 ~ /all/ {print 100-$NF}'|head -n 1)"
 fi
 
 echo "cpu_usage ${cpu_usage}" >>/opt/exporter/key/syskey.tmp
 
 awk '{if($1 ~ /^[a-zA-Z]/ && $2 ~ /^[0-9]/ && $3 == "") print}' /opt/exporter/key/syskey.tmp|sort -uk1,1 >/opt/exporter/key/syskey.tmp2
 
-if [ ! -z "$(cat /opt/exporter/key/syskey.tmp2|grep ^cpu_usage)" ];then
+if [ ! -z "$(grep ^cpu_usage /opt/exporter/key/syskey.tmp2|awk '{print $2}'|grep ^[0-9])" ];then
   cp -f /opt/exporter/key/syskey.tmp2 /opt/exporter/key/syskey.prom
 fi
-

@@ -31,9 +31,9 @@ fi
 
 echo
 
-echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.4.4\""
+echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.4.6\""
 echo
-${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.4.4"
+${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.4.6"
 echo -e "\n\n"
 
 if [ $? != 0 ];then
@@ -87,7 +87,7 @@ echo -e "\n\n"
 APP="$(${CURL} -s ${proxy}/agent/app/lld  -d "id=${host_id}&ak=${host_ak}")"
 
 if [[ "$((${CUR_SEC} % 10))" == '0' ]] && [[ ! -z "${APP}" ]];then
-    NETSTAT=$(sudo netstat -npltu|sed '1,2d'|grep -Ev '^(tcp6|udp)'|awk '{print $4,$NF}'|awk -F'[ |:|/]' '{print $2,$(NF-1)}'|sort -k 2 -u)
+    NETSTAT=$(sudo netstat -nplt|sed '1,2d'|grep -Ev '^(tcp6|udp)'|awk '{print $4,$NF}'|awk -F'[ |:|/]' '{print $2,$(NF-1)}'|sort -k 2 -u)
     echo "${NETSTAT}"|while read i
     do
         PORT=$(echo "${i}"|awk '{print $1}')
@@ -119,12 +119,12 @@ fi
 
 echo -e "\n\n"
 
-if [ "$(date +%M)" == '30' ];then
+if [ "$(date +%H%M)" == '2315' ];then
     CROND_STATUS="$(ps aux|grep -v grep|grep -E '(cron|crond)($| )')"
     if [ ! -z "${CROND_STATUS}" ];then
-       CROND_STATUS=on
+      CROND_STATUS=on
     else
-       CROND_STATUS=off
+      CROND_STATUS=off
     fi
 
     CRONTAB="$(sudo cat /var/spool/cron/root)"
@@ -138,7 +138,7 @@ fi
 
 echo -e "\n\n"
 
-if [ "$(date +%M)" == '30' ];then
+if [[ "$(date +%H%M)" == '2315' ]] || [[ "$(date +%H%M)" == '1215' ]];then;then
     echo
     timeout 15 /bin/bash ${base_dir}/hostinfo.sh
 fi

@@ -64,7 +64,7 @@ exe_file="windows_exporter-0.15.0-386.exe"
       ignore_errors: yes
       
     - name: 安装windows_exporter服务
-      win_shell: cmd.exe /c sc create windows_exporter binPath='\"{{ dest_path }}/windows_exporter.exe\" --telemetry.addr :9100 --collectors.enabled=\"cpu,cs,logical_disk,net,os,process,tcp,system,textfile\" --collector.textfile.directory \"{{ dest_path }}/key/\"' start=auto
+      win_shell: cmd.exe /c sc create windows_exporter binPath='\"{{ dest_path }}/windows_exporter.exe\" --telemetry.addr :9100 --collectors.enabled=\"cpu,memory,cs,logical_disk,net,os,process,tcp,system,textfile,mssql\" --collector.textfile.directory \"{{ dest_path }}/key/\"' start=auto
       ignore_errors: yes
       
     - name: 创建系统脚本计划任务

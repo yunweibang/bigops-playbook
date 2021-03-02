@@ -103,5 +103,9 @@ Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "tcp_synrecv $tcp_sy
 Add-Content -Path "$output_file_tmp" -Encoding Ascii -Value "tcp_timewait $tcp_timewait"
 
 
+Get-Content $output_file_tmp | Select-Object -unique|Set-content $output_file
 
+Remove-Item $output_file_tmp
+
+}
 
