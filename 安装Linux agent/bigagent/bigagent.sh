@@ -31,9 +31,9 @@ fi
 
 echo
 
-echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.5.1\""
+echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.5.2\""
 echo
-${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.5.1"
+${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.5.2"
 echo -e "\n\n"
 
 if [ $? != 0 ];then
@@ -138,7 +138,7 @@ fi
 
 echo -e "\n\n"
 
-if [[ "$(date +%H%M)" == '2315' ]] || [[ "$(date +%H%M)" == '1215' ]];then;then
+if [[ "$(date +%H%M)" == '2315' ]] || [[ "$(date +%H%M)" == '1215' ]];then
     echo
     timeout 15 /bin/bash ${base_dir}/hostinfo.sh
 fi
