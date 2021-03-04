@@ -31,9 +31,9 @@ fi
 
 echo
 
-echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.4.6\""
+echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.5.1\""
 echo
-${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.4.6"
+${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.5.1"
 echo -e "\n\n"
 
 if [ $? != 0 ];then
@@ -117,24 +117,24 @@ if [[ "$((${CUR_SEC} % 10))" == '0' ]] && [[ ! -z "${APP}" ]];then
     done
 fi
 
-echo -e "\n\n"
+# echo -e "\n\n"
 
-if [ "$(date +%H%M)" == '0315' ];then
-    CROND_STATUS="$(ps aux|grep -v grep|grep -E '(cron|crond)($| )')"
-    if [ ! -z "${CROND_STATUS}" ];then
-      CROND_STATUS=on
-    else
-      CROND_STATUS=off
-    fi
+# if [ "$(date +%H%M)" == '0315' ];then
+#     CROND_STATUS="$(ps aux|grep -v grep|grep -E '(cron|crond)($| )')"
+#     if [ ! -z "${CROND_STATUS}" ];then
+#       CROND_STATUS=on
+#     else
+#       CROND_STATUS=off
+#     fi
 
-    CRONTAB="$(sudo cat /var/spool/cron/root)"
-    echo "${CURL} ${proxy}/agent/cron -d \"id=${host_id}&ak=${host_ak}&crond_status=${CROND_STATUS}\" --data-urlencode \"cron=${CRONTAB}\""
+#     CRONTAB="$(sudo cat /var/spool/cron/root)"
+#     echo "${CURL} ${proxy}/agent/cron -d \"id=${host_id}&ak=${host_ak}&crond_status=${CROND_STATUS}\" --data-urlencode \"cron=${CRONTAB}\""
 
-    if [ ! -z "${CRONTAB}" ];then
-        ${CURL} ${proxy}/agent/cron -d "id=${host_id}&ak=${host_ak}&crond_status=${CROND_STATUS}" --data-urlencode "cron=${CRONTAB}"
-        echo
-    fi
-fi
+#     if [ ! -z "${CRONTAB}" ];then
+#         ${CURL} ${proxy}/agent/cron -d "id=${host_id}&ak=${host_ak}&crond_status=${CROND_STATUS}" --data-urlencode "cron=${CRONTAB}"
+#         echo
+#     fi
+# fi
 
 echo -e "\n\n"
 
