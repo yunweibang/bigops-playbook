@@ -1,0 +1,37 @@
+filebeat.inputs:
+- type: log
+  paths:
+  - slow.log
+  exclude_lines: ['^\# Time','^/','^mysqld','^Tcp','^Time']
+  fields:
+    type: "mysqlslowlog"
+    #换成bigops里实例ID
+    instance_id: bigops_id
+  fields_under_root: true
+  multiline:
+    pattern: '^\# Time|^\# User'
+    negate: true
+    match: after
+  enabled: true
+
+- type: log
+  paths:
+  - error.log
+  fields:
+    type: "mysqlerrorlog"
+    #换成bigops里实例ID
+    instance_id: bigops_id
+  fields_under_root: true
+  enabled: true
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+  index.number_of_shards: 1
+
+output.logstash:
+  #换成logstash服务器的IP和端口
+  hosts: ["ip:port"]
+
+monitoring.enabled: false
+logging.metrics.enabled: false

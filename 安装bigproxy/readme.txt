@@ -18,7 +18,10 @@
 - hosts: all
   gather_facts: no
 
-  tasks:      
+  tasks:   
+    - name: 创建目录
+      shell: if [ ! -d /opt/bigops/bigproxy/ ];then sudo mkdir -p /opt/bigops/bigproxy/ && sudo chmod 755 /opt/bigops/ /opt/bigops/bigproxy/;fi
+
     - name: 上传文件到远程目录
       copy: src={{ item }} dest=/opt/bigops/bigproxy
       with_fileglob:

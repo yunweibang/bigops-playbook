@@ -31,9 +31,9 @@ fi
 
 echo
 
-echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.5.2\""
+echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.5.3\""
 echo
-${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.5.2"
+${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.5.3"
 echo -e "\n\n"
 
 if [ $? != 0 ];then
@@ -45,7 +45,7 @@ if [ "$((${CUR_SEC} % 10))" == '0' ];then
     RSS="$(/usr/bin/ps -eo user,pid,pcpu,pmem,tty,stat,lstart,etime,cmd --sort=-rss|sed '1d'|head -n 5)"
     PS="$(echo -e "${PCPU}\n${RSS}"|sort -n|uniq|grep -Ev '0.0  0.0')"
     CPU_CORES="$(cat /proc/cpuinfo |grep ^processor|wc -l)"
-    PS_SNAPSHOT="$(echo "${PS}"|awk '{if(($3/'"${CPU_CORES}"'>90)||($4>90))print}')"
+    PS_SNAPSHOT="$(echo "${PS}"|grep -Ev rngd|awk '{if(($3/'"${CPU_CORES}"'>90)||($4>90))print}')"
 
     echo "${CURL} ${proxy}/agent/ps -d \"id=${host_id}&ak=${host_ak}\" --data-urlencode \"ps=${PS}\""
 
