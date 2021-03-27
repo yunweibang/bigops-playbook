@@ -31,9 +31,9 @@ fi
 
 echo
 
-echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.5.3\""
+echo "${CURL} ${proxy}/agent/version -d \"id=${host_id}&ak=${host_ak}&agent_version=4.0.6.1\""
 echo
-${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.5.3"
+${CURL} ${proxy}/agent/version -d "id=${host_id}&ak=${host_ak}&agent_version=4.0.6.1"
 echo -e "\n\n"
 
 if [ $? != 0 ];then
@@ -87,17 +87,15 @@ echo -e "\n\n"
 APP="$(${CURL} -s ${proxy}/agent/app/lld  -d "id=${host_id}&ak=${host_ak}")"
 
 if [[ "$((${CUR_SEC} % 10))" == '0' ]] && [[ ! -z "${APP}" ]];then
-    NETSTAT=$(sudo netstat -nplt|sed '1,2d'|grep -Ev '^(tcp6|udp)'|awk '{print $4,$NF}'|awk -F'[ |:|/]' '{print $2,$(NF-1)}'|sort -k 2 -u)
+    NETSTAT=$(sudo netstat -nplt|sed '1,2d'|grep -Ev '^udp'|awk '{print $4,$NF}'|sed -r 's/^:+/:/g'|awk -F'[ |:|/]' '{print $2,$(NF-1)}'|sort -k 2 -u)
     echo "${NETSTAT}"|while read i
     do
         PORT=$(echo "${i}"|awk '{print $1}')
         PID=$(echo "${i}"|awk '{print $2}')
         echo "${APP}"|while read app
         do
-            echo "${app}"
             NAME="$(echo "${app}"|awk -F'[|][|]' '{print $1}')"
             KEYWORD="$(echo "${app}"|awk -F'[|][|]' '{print $2}')"
-            echo "${KEYWORD}"
             if [[ -f /proc/${PID}/cmdline ]] && [[ ! -z "${KEYWORD}" ]];then
                 if [ ! -z "$(echo "${KEYWORD}"|grep -E '(mysql|mysqld)')" ];then
                     if [ ! -z "$(cat /proc/${PID}/cmdline|grep -Ei "${KEYWORD}"|grep -Ev '(^Binary|percona|mariadb)')" ];then

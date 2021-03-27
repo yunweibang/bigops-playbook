@@ -9,6 +9,11 @@ if [ `arch` != "x86_64" ];then
     exit
 fi
 
+if [ ! -f /usr/bin/xtrabackup ];then
+  sudo rpm -ivh libev-*.rpm
+  sudo rpm -ivh percona-xtrabackup-*.rpm
+fi
+
 docker stop bigproxy >/dev/null 2>&1
 docker rm -f bigproxy >/dev/null 2>&1
 docker rmi bigproxy:latest >/dev/null 2>&1
