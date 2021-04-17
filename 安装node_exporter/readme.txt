@@ -27,7 +27,7 @@ https://github.com/prometheus/node_exporter/
       shell: if [ ! -d /opt/exporter ];then sudo mkdir -p /opt/exporter;fi 
 
     - name: 授权exporter权限
-      shell: sudo chown bigops:bigops /opt/exporter
+      shell: sudo chmod 777 /opt/exporter
 
     - name: 上传文件到远程目录
       copy: src={{ item }} dest=/opt/exporter

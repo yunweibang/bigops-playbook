@@ -23,5 +23,5 @@ fi
 
 cd /opt/bigops/bigproxy/
 
-/opt/bigops/jdk/bin/java -jar -Duser.timezone=GMT+08 -Djava.net.preferIPv4Stack=true jvm_option /opt/bigops/bigproxy/bigproxy.jar >/dev/null 2>&1 &
+/opt/bigops/jdk/bin/java -jar -Duser.timezone=GMT+08 -Djava.net.preferIPv4Stack=true -Ddruid.mysql.usePingMethod=false jvm_option /opt/bigops/bigproxy/bigproxy.jar >/dev/null 2>&1 &
 

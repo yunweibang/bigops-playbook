@@ -3,16 +3,20 @@
 export PATH=/opt/bigops/bigagent/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/root/bin
 
 alias cp=cp
+alias mv=mv
 
 if [ `arch` != "x86_64" ];then
     echo "不支持当前架构，只支持x86_64"
     exit
 fi
 
-if [ ! -f /usr/bin/xtrabackup ];then
-  sudo rpm -ivh libev-*.rpm
-  sudo rpm -ivh percona-xtrabackup-*.rpm
-fi
+# sudo rpm -ivh --force perl-DBD-MySQL-*.rpm >/dev/null 2>&1
+# sudo rpm -ivh --force libev-*.rpm >/dev/null 2>&1
+# sudo rpm -ivh --force percona-xtrabackup-8*.rpm >/dev/null 2>&1
+# sudo mv -f /usr/bin/xtrabackup /usr/bin/xtrabackup8 >/dev/null 2>&1
+
+# sudo rpm -e percona-xtrabackup-80-8.0.23-16.1.el7.x86_64 >/dev/null 2>&1
+# sudo rpm -ivh --force percona-xtrabackup-2*.rpm >/dev/null 2>&1
 
 docker stop bigproxy >/dev/null 2>&1
 docker rm -f bigproxy >/dev/null 2>&1
