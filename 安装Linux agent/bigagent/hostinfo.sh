@@ -104,26 +104,6 @@ if [ ! -z "{NIC}" ];then
   echo -e "\n\n"
 fi
 
-
-if [ -z "$(sudo virt-what)" ];then
-
-  #厂商型号
-  if [[ ! -z "${product_vendor}" ]] && [[ ! -z "${product_name}" ]] && [[ -z "${virt_type}" ]];then
-    ${CURL} ${proxy}/agent/hwmodel -d "id=${host_id}&ak=${host_ak}&vendor=${product_vendor}&model=${product_name}"
-    echo -e "\n\n"
-  fi
-
-  #ipmi
-  if hash ipmitool 2>/dev/null; then
-    ipmi=$(sudo ipmitool mc info 2>/dev/null)
-    if [ ! -z "${ipmi}" ];then
-      ipmi_lan=$(sudo ipmitool lan print 1)
-      ipmi_ip=$(echo "${ipmi_lan}"|grep -E 'IP Address'|awk '{print $NF}'|grep -E ^[0-9])
-      ${CURL} ${proxy}/agent/hostipmi -d "id=${host_id}&ak=${host_ak}&ip=${ipmi_ip}"
-      echo -e "\n\n"
-    fi
-  fi
-
 #配置详情，内存信息
 MEM=$(sudo dmidecode -t 17 |awk '/Memory Device/,0'|awk -F":[ ]" '\
 {if ($1 ~ /^\tSize$/) printf("%s||",$2)};\
@@ -136,37 +116,37 @@ MEM=$(sudo dmidecode -t 17 |awk '/Memory Device/,0'|awk -F":[ ]" '\
 |grep -E '^[0-9]'|sed 's/[ ]*||/||/g' \
 |awk -F'[|][|]' '{if($7 == "") {print $0,"|| ||"} else{print $0}}')
 
-  #echo "${MEM}"
+#echo "${MEM}"
 
-  if [ ! -z "${MEM}" ];then
-  	${CURL} ${proxy}/agent/hostmem -d "id=${host_id}&ak=${host_ak}" --data-urlencode "mem=${MEM}"
-    echo -e "\n\n"
-  fi
+if [ ! -z "${MEM}" ];then
+  ${CURL} ${proxy}/agent/hostmem -d "id=${host_id}&ak=${host_ak}" --data-urlencode "mem=${MEM}"
+  echo -e "\n\n"
+fi
 
 #配置详情，CPU统计 
-  PCPU=$(cat /proc/cpuinfo|grep -E 'physical id'|sort|uniq|wc -l)
-  if hash lscpu 2>/dev/null; then
-    LCPU=$(lscpu|grep -E '^CPU\(s\)'|awk '{print $NF}')
-    if [ "$(lscpu|grep -E '^Thread'|awk '{print $NF}'|head -n 1)" == 2 ];then
-       HT="启用"
-    fi
-    if [ "$(lscpu|grep -E '^Thread'|awk '{print $NF}'|head -n 1)" == 1 ];then
-       HT="禁用"
-    fi
-    SPEED=$(lscpu|grep -E '^CPU MHz'|awk '{print $NF}')
+PCPU=$(cat /proc/cpuinfo|grep -E 'physical id'|sort|uniq|wc -l)
+if hash lscpu 2>/dev/null; then
+  LCPU=$(lscpu|grep -E '^CPU\(s\)'|awk '{print $NF}')
+  if [ "$(lscpu|grep -E '^Thread'|awk '{print $NF}'|head -n 1)" == 2 ];then
+     HT="启用"
   fi
-
-  CPUSTATS=$(echo "${PCPU}||${LCPU:= }||${HT:=not found lscpu}||${SPEED:= }")
-
-  if [ ! -z "${CPUSTATS}" ];then
-    ${CURL} ${proxy}/agent/hostcpustats -d "id=${host_id}&ak=${host_ak}" --data-urlencode "cpustats=${CPUSTATS}"
-    echo -e "\n\n"
+  if [ "$(lscpu|grep -E '^Thread'|awk '{print $NF}'|head -n 1)" == 1 ];then
+     HT="禁用"
   fi
+  SPEED=$(lscpu|grep -E '^CPU MHz'|awk '{print $NF}')
+fi
 
-  if [ ! -z "${CPU}" ];then
-    ${CURL} ${proxy}/agent/hostcpu -d "id=${host_id}&ak=${host_ak}" --data-urlencode "cpu=${CPU}"
-    echo -e "\n\n"
-  fi
+CPUSTATS=$(echo "${PCPU}||${LCPU:= }||${HT:=not found lscpu}||${SPEED:= }")
+
+if [ ! -z "${CPUSTATS}" ];then
+  ${CURL} ${proxy}/agent/hostcpustats -d "id=${host_id}&ak=${host_ak}" --data-urlencode "cpustats=${CPUSTATS}"
+  echo -e "\n\n"
+fi
+
+if [ ! -z "${CPU}" ];then
+  ${CURL} ${proxy}/agent/hostcpu -d "id=${host_id}&ak=${host_ak}" --data-urlencode "cpu=${CPU}"
+  echo -e "\n\n"
+fi
 
 #配置详情，CPU，格式：socket||model||core_count||ht
 
@@ -176,10 +156,26 @@ CPU=$(sudo dmidecode -t processor | awk -F":[ ]" '\
 {if ($1 ~ /^\tCore Count$/) printf("%s\n",$2)};' \
 |sed 's/[ ][ ]*/ /g'|awk '{print $0"||""'${HT}'"}')
 
-  #列子："CPU1||Intel(R) Xeon(R) CPU E5310 @ 1.60GHz||core count||HT" 
-  ${CURL} ${proxy}/agent/hostcpu -d "id=${host_id}&ak=${host_ak}" --data-urlencode "cpu=${CPU}"
-  echo -e "\n\n"
+#列子："CPU1||Intel(R) Xeon(R) CPU E5310 @ 1.60GHz||core count||HT" 
+${CURL} ${proxy}/agent/hostcpu -d "id=${host_id}&ak=${host_ak}" --data-urlencode "cpu=${CPU}"
+echo -e "\n\n"
 
+
+#厂商型号
+if [[ -z "$(sudo virt-what)" ]] && [[ ! -z "${product_vendor}" ]] && [[ ! -z "${product_name}" ]] && [[ -z "${virt_type}" ]];then
+  ${CURL} ${proxy}/agent/hwmodel -d "id=${host_id}&ak=${host_ak}&vendor=${product_vendor}&model=${product_name}"
+  echo -e "\n\n"
+fi
+
+#ipmi
+if hash ipmitool 2>/dev/null; then
+  ipmi=$(sudo ipmitool mc info 2>/dev/null)
+  if [ ! -z "${ipmi}" ];then
+    ipmi_lan=$(sudo ipmitool lan print 1)
+    ipmi_ip=$(echo "${ipmi_lan}"|grep -E 'IP Address'|awk '{print $NF}'|grep -E ^[0-9])
+    ${CURL} ${proxy}/agent/hostipmi -d "id=${host_id}&ak=${host_ak}&ip=${ipmi_ip}"
+    echo -e "\n\n"
+  fi
 fi
 
 
